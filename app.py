@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 from models import User
 from schemas import UserRegisterRequest, UserLoginRequest,CreateExperienceRequest, CreateEducationRequest, CreateCandidatRequest
 
+import uvicorn
+
 from models import Education, Experience, Candidat
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -395,3 +397,8 @@ async def update_user(user_id: int, user: UserRegisterRequest):
             return {"message": "User updated successfully"}
         else:
             return {"message": "User not found"}
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+    
