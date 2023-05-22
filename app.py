@@ -41,7 +41,7 @@ DB_BASE = os.environ.get('DB_BASE')
 
 DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_BASE}"
 engine = create_async_engine(DATABASE_URL, future=True, echo=True)
-async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, autocommit=True, autoflush=False) # type: ignore
+async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, autoflush=False) # type: ignore
 
 async def create_tables():
     async with engine.begin() as conn:
