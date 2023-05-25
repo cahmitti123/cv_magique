@@ -60,6 +60,25 @@ SECRET_KEY = os.environ.get("SECRET_KEY")  # Change this to your desired secret 
 ALGORITHM = os.environ.get("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES")
 
+
+
+json_experience = [
+    {"fonction" : "software enginner"},
+    {"societe" : "Lideo"},
+    {"lieu" : "agadir"},
+    {"start_at" : "12/03/2016"},
+    {"end_at" : "01/07/2021"},
+    {"description" : "realisation des systeme"}
+]
+
+json_education = [
+    {"diplome" : "ingenieur informatique"},
+    {"institut" : "marrakech"},
+    {"lieu" : "agadir"},
+    {"start_at" : "12/03/2016"},
+    {"end_at" : "01/07/2021"},
+    {"description" : "python student"}
+]
 ### the API CRUD ###
 #API root
 @app.get("/")
@@ -80,24 +99,22 @@ async def get_candidats():
             "country": candidat.country, "postalcode": candidat.postalcode,
             "tele": candidat.tele, "skills": candidat.skills,
             "img_url": candidat.img_url,  
-            "exp" : json.loads(candidat.experience_test)
+            "experience" : json.loads(candidat.experience_test),
+            "education" : json.loads(candidat.education_test),
             
             } for candidat in candidats]
             return {"candidats": candidats_list}
         else:
             return {"message": "Candidats not found"}
 
-json_test = [
-    {"tes1" : "value_test1"},
-    {"tes2" : "value_test2"}
-]
 
 #create new candidat
 @app.post("/candidats")
 async def create_candidat(candidat: CreateCandidatRequest):
     async with async_session() as session: # type: ignore
         db_candidat = candidat.dict(exclude_none=True)
-        db_candidat["experience_test"] = json.dumps(json_test) # Just for testing
+        db_candidat["experience_test"] = json.dumps(json_experience)
+        db_candidat["education_test"] = json.dumps(json_education) # Just for testing
         cond = Candidat(**db_candidat)
         session.add(cond)
         await session.commit()
