@@ -12,6 +12,9 @@ class CreateCandidatRequest(BaseModel):
     skills: str
     img_url: str
 
+    class Config:
+        orm_mode = True
+
 class CreateExperienceRequest(BaseModel):
     societe: str
     start_at: str

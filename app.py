@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
-import jwt
+import jwt, json
 from datetime import datetime, timedelta
 from models import User
 from schemas import UserRegisterRequest, UserLoginRequest,CreateExperienceRequest, CreateEducationRequest, CreateCandidatRequest
@@ -79,32 +79,27 @@ async def get_candidats():
             "email": candidat.email, "city": candidat.city,
             "country": candidat.country, "postalcode": candidat.postalcode,
             "tele": candidat.tele, "skills": candidat.skills,
-            "img_url": candidat.img_url  
+            "img_url": candidat.img_url,  
+            "exp" : json.loads(candidat.experience_test)
             
             } for candidat in candidats]
             return {"candidats": candidats_list}
         else:
             return {"message": "Candidats not found"}
 
-
+json_test = [
+    {"tes1" : "value_test1"},
+    {"tes2" : "value_test2"}
+]
 
 #create new candidat
 @app.post("/candidats")
 async def create_candidat(candidat: CreateCandidatRequest):
     async with async_session() as session: # type: ignore
-        db_candidat = Candidat(
-            nom=candidat.nom,
-            prenom=candidat.prenom,
-            address=candidat.address,
-            email=candidat.email,
-            city=candidat.city,
-            country=candidat.country,
-            postalcode=candidat.postalcode,
-            tele=candidat.tele,
-            skills=candidat.skills,
-            img_url=candidat.img_url
-        )
-        session.add(db_candidat)
+        db_candidat = candidat.dict(exclude_none=True)
+        db_candidat["experience_test"] = json.dumps(json_test) # Just for testing
+        cond = Candidat(**db_candidat)
+        session.add(cond)
         await session.commit()
         return {"message": "Candidat created successfully"}
 
