@@ -39,7 +39,7 @@ DB_USER = os.environ.get('DB_USER')
 DB_PASS = os.environ.get('DB_PASS')
 DB_BASE = os.environ.get('DB_BASE')
 
-DATABASE_URL = f"mysql+aiomysql://root@localhost:3306/cv_magique"
+DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_BASE}"
 engine = create_async_engine(DATABASE_URL, future=True, echo=True)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, autoflush=False) # type: ignore
 
