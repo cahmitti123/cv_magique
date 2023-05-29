@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class CreateCandidatRequest(BaseModel):
+class CreateCvRequest(BaseModel):
     nom: str
     prenom: str
     address: str
@@ -9,27 +9,65 @@ class CreateCandidatRequest(BaseModel):
     country: str
     postalcode: str
     tele: str
-    skills: str
+    brief: str
     img_url: str
+    experiences: str
+    education: str
+    languages: str
+    user_id: int
+    class Config:
+        orm_mode = True
 
-class CreateExperienceRequest(BaseModel):
-    societe: str
-    start_at: str
-    end_at: str
-    job: str
+class UpdateCvRequest(BaseModel):
+    nom: str = None
+    prenom: str = None
+    address: str = None
+    email: str = None
+    city: str = None
+    country: str = None
+    postalcode: str = None
+    tele: str = None
+    brief: str = None
+    img_url: str = None
+    experiences: str = None
+    education: str = None
+    languages: str = None
+    user_id: int = None
 
-class CreateEducationRequest(BaseModel):
-    institut: str
-    start_at: str
-    end_at: str
-    diploma: str
 
 
+class CreateUserRequest(BaseModel):
+    fullname: str
+    email: str
+    avatar: str
+    hashed_password: str
+    is_admin: bool
 
-class UserRegisterRequest(BaseModel):
-    username: str
-    password: str
+class UpdateUserRequest(BaseModel):
+    fullname: str = None
+    email: str = None
+    avatar: str = None
+    hashed_password: str = None
+    is_admin: bool = None
+    
+class CreateDesignRequest(BaseModel):
+    name: str
+
+class UpdateDesignRequest(BaseModel):
+    name: str = None
+
+
+class CreateCvDesignUserRequest(BaseModel):
+    cv_id: int
+    user_id: int
+    design_id: int
+
+class UpdateCvDesignUserRequest(BaseModel):
+    cv_id: int =  None
+    user_id: int =  None
+    design_id: int =  None
+
 
 class UserLoginRequest(BaseModel):
-    username: str
-    password: str
+    email: str
+    hashed_password: str

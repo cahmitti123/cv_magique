@@ -1,12 +1,13 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean
+from sqlalchemy.dialects.mysql import JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
-class Candidat(Base):
-    __tablename__ = "candidats"
 
+class Cv(Base):
+    __tablename__ = "cvs"
     id = Column(Integer, primary_key=True, index=True)
     nom = Column(String(50))
     prenom = Column(String(50))
@@ -16,40 +17,41 @@ class Candidat(Base):
     country = Column(String(256))
     postalcode = Column(String(256))
     tele = Column(String(256))
-    skills = Column(String(256))
+    brief = Column(String(50))
     img_url = Column(String(256))
-    education = relationship("Education", back_populates="candidat", cascade="all, delete")
-    experience = relationship("Experience", back_populates="candidat", cascade="all, delete")
-
-
-class Experience(Base):
-    __tablename__ = "experience"
-
-    id = Column(Integer, primary_key=True, index=True)
-    candidat_id = Column(Integer, ForeignKey("candidats.id"))
-    societe = Column(String(50))
-    start_at = Column(String(50))
-    end_at = Column(String(10))
-    job = Column(String(10))
-    candidat = relationship("Candidat", back_populates="experience")
-
-
-class Education(Base):
-    __tablename__ = "education"
-
-    id = Column(Integer, primary_key=True, index=True)
-    candidat_id = Column(Integer, ForeignKey("candidats.id"))
-    institut = Column(String(50))
-    start_at = Column(String(50))
-    end_at = Column(String(10))
-    diploma = Column(String(10))
-    candidat = relationship("Candidat", back_populates="education")
-
+    experiences = Column(Text(600))
+    education = Column(Text(600))
+    languages = Column(Text(600))
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+    user = relationship("User", back_populates="cvs")
+    cv_design_users = relationship("CvDesignUser", back_populates="cv")
 
 
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(50), unique=True, index=True)
-    password = Column(String(100))
-    
+    fullname = Column(String(50))
+    email = Column(String(50), unique=True, index=True)
+    avatar = Column(String(100))
+    hashed_password = Column(String(100))
+    cvs = relationship("Cv", back_populates="user", cascade="all, delete")
+    cv_design_users = relationship("CvDesignUser", back_populates="user")
+    is_admin = Column(Boolean, default=False)
+
+
+class Design(Base):
+    __tablename__ = 'designs'
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100))
+    cv_design_users = relationship("CvDesignUser", back_populates="design")
+
+
+class CvDesignUser(Base):
+    __tablename__ = 'cv_design_users'
+    id = Column(Integer, primary_key=True, index=True)
+    cv_id = Column(Integer, ForeignKey('cvs.id', ondelete='CASCADE'))
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+    design_id = Column(Integer, ForeignKey('designs.id', ondelete='CASCADE'))
+    cv = relationship("Cv", back_populates="cv_design_users")
+    user = relationship("User", back_populates="cv_design_users")
+    design = relationship("Design", back_populates="cv_design_users")
