@@ -179,6 +179,7 @@ async def update_user(user_id: int, user: UpdateUserRequest):
         if db_user:
             db_user.fullname = user.fullname
             db_user.email = user.email
+            db_user.avatar = user.avatar
             await session.commit()
             return {"message": "User updated successfully"}
         else:
