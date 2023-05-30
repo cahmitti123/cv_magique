@@ -30,7 +30,7 @@ class Cv(Base):
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True, index=True)
-    fullname = Column(String(50))
+    fullname = Column(String(100))
     email = Column(String(50), unique=True, index=True)
     avatar = Column(String(100))
     hashed_password = Column(String(100))

@@ -116,27 +116,26 @@ def generate_token(email: str) -> str:
     payload = {
         "sub": email,
         "exp": datetime.utcnow() + timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES)),
+
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     return token 
 
-
-
 #protected routes only for valid users
 @app.get("/protected")
-async def protected_route(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def protected_route(credentials: HTTPAuthorizationCredentials = Depends(security),session: AsyncSession = Depends(get_session)):
     try:
         token = credentials.credentials
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        fullname = payload.get("sub")
+        email = payload.get("sub")
+        user = await session.execute(select(User).where(User.email == email))
+        user = user.scalar()
+        return {"id":user.id,"fullname":user.fullname,"email":user.email,"avatar":user.avatar}
         # Perform additional authorization checks if necessary
-
-        return {"message": f"Hello, {fullname}! This is a protected route."}
     except jwt.exceptions.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
     except (jwt.exceptions.DecodeError, jwt.exceptions.InvalidSignatureError):
         raise HTTPException(status_code=401, detail="Invalid token")
-
 
 
 
@@ -156,7 +155,7 @@ async def get_user(user_id: int):
     async with async_session() as session: # type: ignore
         db_user = await session.get(User, user_id)
         if db_user:
-            return {"user_id": db_user.id, "username": db_user.email, "hashed_password": db_user.hashed_password}
+            return {"user_id": db_user.id,"fullname":db_user.fullname,"email": db_user.email, "hashed_password": db_user.hashed_password}
         else:
             return {"message": "User not found"}
 
