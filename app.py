@@ -40,6 +40,7 @@ DB_PASS = os.environ.get('DB_PASS')
 DB_BASE = os.environ.get('DB_BASE')
 
 DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_BASE}"
+#DATABASE_URL = f"mysql+aiomysql://root@localhost:3306/cv_magique"
 engine = create_async_engine(DATABASE_URL, future=True, echo=True)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, autoflush=False) # type: ignore
 
@@ -452,4 +453,4 @@ async def delete_cv_design_user(cv_design_user_id: int):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    uvicorn.run(app, host="192.168.1.50", port=8080)
