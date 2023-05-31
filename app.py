@@ -129,8 +129,11 @@ async def protected_route(credentials: HTTPAuthorizationCredentials = Depends(se
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email = payload.get("sub")
         user = await session.execute(select(User).where(User.email == email))
+        cv = await session.execute(select(Cv).where(Cv.user_id == User.id))
         user = user.scalar()
-        return {"id":user.id,"fullname":user.fullname,"email":user.email,"avatar":user.avatar}
+        cv = cv.scalar()
+        return {"id":user.id,"fullname":user.fullname,"email":user.email,"avatar":user.avatar,
+                "userResumes":cv}
         # Perform additional authorization checks if necessary
     except jwt.exceptions.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
@@ -190,6 +193,7 @@ async def update_user(user_id: int, user: UpdateUserRequest):
 @app.post("/cvs/{user_id}")
 async def create_user_cv(user_id: int, cv: CreateCvRequest):
     async with async_session() as session:  # type: ignore
+        
         user = await session.get(User, user_id)
         if user:
             db_cv = cv.dict(exclude_none=True)
@@ -406,13 +410,18 @@ async def create_cv_design_user(cv_id: int, user_id: int, design_id: int, reques
 async def get_cv_design_user(cv_design_user_id: int, session: AsyncSession = Depends(get_session)):
     # Retrieve the CvDesignUser from the database
     cv_design_user = await session.get(CvDesignUser, cv_design_user_id)
-
+    user_data = await session.execute(select(User).where(User.id == cv_design_user.user_id))
+    cv_data = await session.execute(select(Cv).where(Cv.id == cv_design_user.cv_id))
+    design_data = await session.execute(select(Design).where(Design.id == cv_design_user.design_id))
+    user_data = user_data.scalar()
+    cv_data = cv_data.scalar()
+    design_data = design_data.scalar()
     # If the CvDesignUser doesn't exist, raise an HTTP exception
     if cv_design_user is None:
         raise HTTPException(status_code=404, detail="CvDesignUser not found")
 
     # Return the retrieved CvDesignUser
-    return cv_design_user
+    return {user_data,cv_data,design_data}
 
 
 # Update CvDesignUser
@@ -444,7 +453,7 @@ async def delete_cv_design_user(cv_design_user_id: int):
         delete_query = CvDesignUser.__table__.delete().where(CvDesignUser.id == cv_design_user_id)
         result = await session.execute(delete_query)
         if result.rowcount > 0:
-            await session.commit()
+            await session.commit()    
             return {"message": "UserCvDesign deleted successfully"}
         else:
             return {"message": "UserCvDesign not found"}
