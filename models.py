@@ -8,7 +8,7 @@ Base = declarative_base()
 
 class Cv(Base):
     __tablename__ = "cvs"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(String(50), primary_key=True, index=True)
     nom = Column(String(50))
     prenom = Column(String(50))
     address = Column(String(50))
@@ -24,7 +24,6 @@ class Cv(Base):
     languages = Column(Text(600))
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
     user = relationship("User", back_populates="cvs")
-    cv_design_users = relationship("CvDesignUser", back_populates="cv")
 
 
 class User(Base):
@@ -35,23 +34,9 @@ class User(Base):
     avatar = Column(String(100))
     hashed_password = Column(String(100))
     cvs = relationship("Cv", back_populates="user", cascade="all, delete")
-    cv_design_users = relationship("CvDesignUser", back_populates="user")
     is_admin = Column(Boolean, default=False)
 
 
-class Design(Base):
-    __tablename__ = 'designs'
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100))
-    cv_design_users = relationship("CvDesignUser", back_populates="design")
 
 
-class CvDesignUser(Base):
-    __tablename__ = 'cv_design_users'
-    id = Column(Integer, primary_key=True, index=True)
-    cv_id = Column(Integer, ForeignKey('cvs.id', ondelete='CASCADE'))
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
-    design_id = Column(Integer, ForeignKey('designs.id', ondelete='CASCADE'))
-    cv = relationship("Cv", back_populates="cv_design_users")
-    user = relationship("User", back_populates="cv_design_users")
-    design = relationship("Design", back_populates="cv_design_users")
+

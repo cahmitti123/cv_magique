@@ -4,15 +4,16 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from typing import List
 from passlib.context import CryptContext
 import jwt, json
 from datetime import datetime, timedelta
 from models import User
-from schemas import CreateCvRequest,CreateUserRequest,CreateDesignRequest,CreateCvDesignUserRequest,UserLoginRequest,UpdateCvRequest,UpdateUserRequest,UpdateCvDesignUserRequest,UpdateDesignRequest
+from schemas import CreateCvRequest,CreateUserRequest,UserLoginRequest,UpdateCvRequest,UpdateUserRequest,CvResponse,UserResponse
 import json
 import uvicorn
-
-from models import Cv,User,Design,CvDesignUser
+import random
+from models import Cv,User
 
 from fastapi.middleware.cors import CORSMiddleware
 from models import Base
@@ -27,7 +28,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace with the appropriate origin(s) for your React application
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -75,388 +76,273 @@ async def welcome_api():
 
 
 
-#register user
-@app.post("/register")
-async def register_user(user_request: CreateUserRequest, session: AsyncSession = Depends(get_session)):
-    # Check if the user already exists in the database
-    user = await session.execute(select(User).where(User.email == user_request.email))
-    if user.scalar():
-        raise HTTPException(status_code=400, detail="User already exists")
+pwd_context = CryptContext(schemes=["bcrypt"])
 
-    # Hash the password
-    hashed_password = pwd_context.hash(user_request.hashed_password)
+# Function to hash the password
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
 
-    # Create a new User object
-    new_user = User(fullname=user_request.fullname, email=user_request.email,avatar=user_request.avatar, hashed_password=hashed_password)
+# Function to verify the password
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
 
-    # Add the new user to the database
-    session.add(new_user)
-    await session.commit()
-
-    return {"message": "User registered successfully"}
-
-
-# login users
-@app.post("/login")
-async def login_user(user_request: UserLoginRequest, session: AsyncSession = Depends(get_session)):
-    # Retrieve the user from the database
-    user = await session.execute(select(User).where(User.email == user_request.email))
-    user = user.scalar()
-
-    if not user or not pwd_context.verify(user_request.hashed_password, user.hashed_password): # type: ignore
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    # Generate a JWT token
-    token = generate_token(user.email) # type: ignore
-
-    return {"token": token} 
-
-
-def generate_token(email: str) -> str:
+# Function to generate the access token
+def create_access_token(user_id: int) -> str:
     payload = {
-        "sub": email,
+        "user_id": user_id,
         "exp": datetime.utcnow() + timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES)),
-
     }
-    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-    return token 
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
-#protected routes only for valid users
-@app.get("/protected")
-async def protected_route(credentials: HTTPAuthorizationCredentials = Depends(security),session: AsyncSession = Depends(get_session)):
+# Function to decode the access token
+def decode_access_token(token: str) -> dict:
     try:
-        token = credentials.credentials
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("sub")
-        user = await session.execute(select(User).where(User.email == email))
-        cv = await session.execute(select(Cv).where(Cv.user_id == User.id))
-        user = user.scalar()
-        cv = cv.scalar()
-        return {"id":user.id,"fullname":user.fullname,"email":user.email,"avatar":user.avatar,
-                "userResumes":cv}
-        # Perform additional authorization checks if necessary
-    except jwt.exceptions.ExpiredSignatureError:
+        return payload
+    except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
-    except (jwt.exceptions.DecodeError, jwt.exceptions.InvalidSignatureError):
+    except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
+@app.post("/register", status_code=201)
+async def register_user(request: CreateUserRequest, session: AsyncSession = Depends(get_session)):
+    # Check if the email is already registered
+    existing_user = await session.execute(select(User).where(User.email == request.email))
+    if existing_user.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Email already registered")
 
-#Get Users
-@app.get("/users")
-async def get_users(session: AsyncSession = Depends(get_session)):
-    # Retrieve all users from the database
-    users = await session.execute(select(User))
-    user_list = users.scalars().all()
-
-    return {"users": user_list}
-
-
-#Get Single User
-@app.get("/users/{user_id}")
-async def get_user(user_id: int):
-    async with async_session() as session: # type: ignore
-        db_user = await session.get(User, user_id)
-        if db_user:
-            return {"user_id": db_user.id,"fullname":db_user.fullname,"email": db_user.email, "hashed_password": db_user.hashed_password}
-        else:
-            return {"message": "User not found"}
-
-#delete user
-@app.delete("/users/{user_id}")
-async def delete_user(user_id: int):
-    async with async_session() as session: # type: ignore
-        delete_query = User.__table__.delete().where(User.id == user_id)
-        result = await session.execute(delete_query)
-        if result.rowcount > 0:
-            await session.commit()
-            return {"message": "User deleted successfully"}
-        else:
-            return {"message": "User not found"}
-
-#update user
-@app.put("/users/{user_id}")
-async def update_user(user_id: int, user: UpdateUserRequest):
-    async with async_session() as session: # type: ignore
-        db_user = await session.get(User, user_id)
-        if db_user:
-            db_user.fullname = user.fullname
-            db_user.email = user.email
-            db_user.avatar = user.avatar
-            await session.commit()
-            return {"message": "User updated successfully"}
-        else:
-            return {"message": "User not found"}
-
-
-#create user cv
-@app.post("/cvs/{user_id}")
-async def create_user_cv(user_id: int, cv: CreateCvRequest):
-    async with async_session() as session:  # type: ignore
-        
-        user = await session.get(User, user_id)
-        if user:
-            db_cv = cv.dict(exclude_none=True)
-            db_cv["experiences"] = json.dumps(cv.experiences)  # Convert experiences to JSON
-            db_cv["education"] = json.dumps(cv.education) 
-            db_cv["languages"] = json.dumps(cv.languages) 
-            db_cv["user_id"] = user_id
-            cond = Cv(**db_cv)
-            session.add(cond)
-            await session.commit()
-            return {"message": "Cv created successfully"}
-        else: 
-            return {"message": "User not found"}
-
-
-# Get user CV
-@app.get("/cvs/{user_id}")
-async def get_user_cv(user_id: int):
-    async with async_session() as session:
-        query = select(Cv).where(Cv.user_id == user_id)
-        result = await session.execute(query)
-        cv_list = result.scalars().all()
-
-        if cv_list:
-            cv_data = []
-            for cv in cv_list:
-                experiences = cv.experiences
-                education = cv.education
-                languages = cv.languages
-                try:
-                    experiences = json.loads(cv.experiences)
-                    education = json.loads(cv.education)
-                    languages = json.loads(cv.languages)
-                except json.JSONDecodeError:
-                    # Handle JSON decode error if necessary
-                    pass
-
-                cv_data.append({
-                    "user_id": cv.user_id,
-                    "nom": cv.nom,
-                    "prenom":cv.prenom,
-                    "address":cv.address,
-                    "email":cv.email,
-                    "city":cv.city,
-                    "country":cv.country,
-                    "postalcode":cv.postalcode,
-                    "tele":cv.tele,
-                    "brief":cv.brief,
-                    "img_url":cv.img_url,
-                    "experiences": experiences,
-                    "education": education,
-                    "languages": languages
-                })
-
-            return cv_data
-        else:
-            return {"message": "CV not found"}
-
-
-
-
-# Delete user CV
-@app.delete("/users/{user_id}/cvs/{cv_id}")
-async def delete_user_cv(user_id: int, cv_id: int):
-    async with async_session() as session: # type: ignore
-        user = await session.get(User, user_id)
-        if user:
-            db_cv = await session.get(Cv, cv_id)
-            if db_cv:
-                await session.delete(db_cv)  # Await the coroutine
-                await session.commit()
-                return {"message": "Cv deleted successfully"}
-            else:
-                raise HTTPException(status_code=404, detail="Cv not found")
-        else:
-            raise HTTPException(status_code=404, detail="User not found")
-
-
-#Update user cv
-@app.put("/users/{user_id}/cvs/{cv_id}")
-async def update_user_cv(user_id: int, cv_id: int, cv: UpdateCvRequest):
-    async with async_session() as session: # type: ignore
-        user = await session.get(User, user_id)
-        if user:
-            db_cv = await session.get(Cv, cv_id)
-            if db_cv:
-                db_cv.nom = cv.nom
-                db_cv.prenom = cv.prenom
-                db_cv.address = cv.address
-                db_cv.email = cv.email
-                db_cv.city = cv.city
-                db_cv.country = cv.country
-                db_cv.postalcode = cv.postalcode
-                db_cv.tele = cv.tele
-                db_cv.brief = cv.brief
-                db_cv.img_url = cv.img_url
-                db_cv.experiences = cv.experiences
-                db_cv.education = cv.education
-                db_cv.languages = cv.languages
-                await session.commit()
-                return {"message": "Cv updated successfully"}
-            else:
-                return {"message": "Cv not found"}       
-        else:
-            return {"message": "User not found"}
-
-
-
-
-
-
-
-
-#create a new design and get design 
-@app.post("/design")
-async def create_design(design_data: CreateDesignRequest):
-    async with async_session() as session:
-        # Create a new design instance with the provided data
-        new_design = Design(name=design_data.name)
-
-        # Add the design to the session
-        session.add(new_design)
-        await session.commit()
-        await session.refresh(new_design)
-
-        # Return the created design
-        return new_design
-    
-#get design
-@app.get("/design/{design_id}")
-async def get_design(design_id: int):
-    async with async_session() as session:
-        # Retrieve the design from the database
-        design = await session.get(Design, design_id)
-
-        # If the design doesn't exist, raise an HTTP exception
-        if design is None:
-            raise HTTPException(status_code=404, detail="Design not found")
-
-        # Return the retrieved design
-        return design
-
-# Update Design
-@app.put("/design/{design_id}")
-async def update_design(design_id: int, design_data: UpdateDesignRequest, session: AsyncSession = Depends(get_session)):
-    # Retrieve the design from the database
-    design = await session.get(Design, design_id)
-
-    # If the design doesn't exist, raise an HTTP exception
-    if design is None:
-        raise HTTPException(status_code=404, detail="Design not found")
-
-    # Update the design with the provided data
-    design.name = design_data.name
-
-    # Commit the changes to the database
+    # Create a new user
+    user = User(
+        fullname=request.fullname,
+        email=request.email,
+        avatar=request.avatar,
+        hashed_password=hash_password(request.hashed_password),
+        is_admin=False,
+    )
+    session.add(user)
     await session.commit()
 
-    # Return a success message
-    return {"message": "Design updated successfully"}
+    # Return the registered user
+    return user
+
+@app.post("/login")
+async def login_user(request: UserLoginRequest, session: AsyncSession = Depends(get_session)):
+    # Check if the user exists
+    user = await session.execute(select(User).where(User.email == request.email))
+    user = user.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    # Verify the password
+    if not verify_password(request.hashed_password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    # Generate the access token
+    access_token = create_access_token(user.id)
+
+    # Return the access token
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
-# Delete Design
-@app.delete("/design/{design_id}")
-async def delete_design(design_id: int):
-    async with async_session() as session: # type: ignore
-        delete_query = Design.__table__.delete().where(Design.id == design_id)
-        result = await session.execute(delete_query)
-        if result.rowcount > 0:
-            await session.commit()
-            return {"message": "Design deleted successfully"}
-        else:
-            return {"message": "Design not found"}
+@app.get("/me", response_model=UserResponse)
+async def get_current_user(session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
 
-
-
-
-# creating a new CvDesignUser
-@app.post("/cvdesignusers/{cv_id}/{user_id}/{design_id}")
-async def create_cv_design_user(cv_id: int, user_id: int, design_id: int, request: CreateCvDesignUserRequest, session: AsyncSession = Depends(get_session)):
-    # Check if the CV exists
-    cv = await session.get(Cv, cv_id)
-    if cv is None:
-        raise HTTPException(status_code=404, detail="CV not found")
-
-    # Check if the User exists
-    user = await session.get(User, user_id)
-    if user is None:
+    # Retrieve the current user from the database
+    user = await session.execute(select(User).where(User.id == user_id))
+    user = user.scalar_one_or_none()
+    if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Check if the Design exists
-    design = await session.get(Design, design_id)
-    if design is None:
-        raise HTTPException(status_code=404, detail="Design not found")
+    # Create a dictionary from the user object
+    user_dict = {
+        "fullname": user.fullname,
+        "email": user.email,
+        "avatar": user.avatar
+    }
 
-    # Create a new CvDesignUser object with the provided data
-    new_cv_design_user = CvDesignUser(
-        cv_id=cv_id,
-        user_id=user_id,
-        design_id=design_id
+    # Return the user data
+    return user_dict
+
+
+@app.get("/me/cvs", response_model=List[CvResponse])
+async def get_current_user_cvs(session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    # Retrieve the CVs of the current user from the database
+    cvs = await session.execute(select(Cv).where(Cv.user_id == user_id))
+    cvs = cvs.scalars().all()
+
+    # Convert the CV objects to dictionaries
+    cvs_dicts = [
+        {
+            "id": cv.id,
+            "nom": cv.nom,
+            "prenom": cv.prenom,
+            "address": cv.address,
+            "email": cv.email,
+            "city": cv.city,
+            "country": cv.country,
+            "postalcode": cv.postalcode,
+            "tele": cv.tele,
+            "brief": cv.brief,
+            "img_url": cv.img_url,
+            "experiences": json.loads(cv.experiences),
+            "education": json.loads(cv.education),
+            "languages": json.loads(cv.languages),
+            "user_id": cv.user_id
+        }
+        for cv in cvs
+    ]
+
+    # Return the CV data
+    return cvs_dicts
+
+#generate random id
+def generate_random_id(length=10):
+    import string
+    return ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=length))
+
+#create user cv
+@app.post("/me/cvs")
+async def create_cv(request: CreateCvRequest, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+    
+    cv_id = generate_random_id()
+    # Create a new CV object from the request data
+    cv = Cv(
+        id = cv_id,
+        nom=request.nom,
+        prenom=request.prenom,
+        address=request.address,
+        email=request.email,
+        city=request.city,
+        country=request.country,
+        postalcode=request.postalcode,
+        tele=request.tele,
+        brief=request.brief,
+        img_url=request.img_url,
+        experiences=json.dumps(request.experiences),
+        education=json.dumps(request.education),
+        languages=json.dumps(request.languages),
+        user_id=user_id
     )
 
-    # Add the new CvDesignUser to the database
-    session.add(new_cv_design_user)
+    # Save the new CV to the database
+    session.add(cv)
     await session.commit()
-    await session.refresh(new_cv_design_user)
 
-    # Return a success message
-    return {"message": "CvDesignUser created successfully"}
+    # Create a success message
+    message = f"CV with ID {cv.id} created successfully"
 
-
-# GET CvDesignUser
-@app.get("/cvdesignusers/{cv_design_user_id}")
-async def get_cv_design_user(cv_design_user_id: int, session: AsyncSession = Depends(get_session)):
-    # Retrieve the CvDesignUser from the database
-    cv_design_user = await session.get(CvDesignUser, cv_design_user_id)
-    user_data = await session.execute(select(User).where(User.id == cv_design_user.user_id))
-    cv_data = await session.execute(select(Cv).where(Cv.id == cv_design_user.cv_id))
-    design_data = await session.execute(select(Design).where(Design.id == cv_design_user.design_id))
-    user_data = user_data.scalar()
-    cv_data = cv_data.scalar()
-    design_data = design_data.scalar()
-    # If the CvDesignUser doesn't exist, raise an HTTP exception
-    if cv_design_user is None:
-        raise HTTPException(status_code=404, detail="CvDesignUser not found")
-
-    # Return the retrieved CvDesignUser
-    return {user_data,cv_data,design_data}
+    # Return the created CV and the success message as a response
+    return {
+        "cv": cv,
+        "message": message
+    }
 
 
-# Update CvDesignUser
-@app.put("/cvdesignusers/{cv_design_user_id}")
-async def update_cv_design_user(cv_design_user_id: int, request: UpdateCvDesignUserRequest, session: AsyncSession = Depends(get_session)):
-    # Retrieve the CvDesignUser from the database
-    cv_design_user = await session.get(CvDesignUser, cv_design_user_id)
+#update cv 
+@app.put("/me/cvs/{cv_id}", response_model=CvResponse)
+async def update_cv(
+    cv_id: int,
+    cv_data: UpdateCvRequest,
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
 
-    # If the CvDesignUser doesn't exist, raise an HTTP exception
-    if cv_design_user is None:
-        raise HTTPException(status_code=404, detail="CvDesignUser not found")
+    # Retrieve the CV from the database
+    cv = await session.get(Cv, cv_id)
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
 
-    # Update the CvDesignUser with the provided data
-    cv_design_user.cv_id = request.cv_id
-    cv_design_user.user_id = request.user_id
-    cv_design_user.design_id = request.design_id
+    # Check if the CV belongs to the current user
+    if cv.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+
+    # Update the CV with the provided data
+    for field, value in cv_data.dict().items():
+        setattr(cv, field, value)
 
     # Commit the changes to the database
     await session.commit()
+    
+    # Return the updated CV
+    return cv
+
+@app.delete("/me/cvs/{cv_id}")
+async def delete_cv(
+    cv_id: int,
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    # Retrieve the CV from the database
+    cv = await session.get(Cv, cv_id)
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    # Check if the CV belongs to the current user
+    if cv.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+
+    # Delete the CV from the database
+    await session.delete(cv)
+    await session.commit()
 
     # Return a success message
-    return {"message": "CvDesignUser updated successfully"}
+    return {"message": "CV deleted successfully"}
 
 
-# Delete CvDesignUser
-@app.delete("/cvdesignusers/{cv_design_user_id}")
-async def delete_cv_design_user(cv_design_user_id: int):
-    async with async_session() as session: # type: ignore
-        delete_query = CvDesignUser.__table__.delete().where(CvDesignUser.id == cv_design_user_id)
-        result = await session.execute(delete_query)
-        if result.rowcount > 0:
-            await session.commit()    
-            return {"message": "UserCvDesign deleted successfully"}
-        else:
-            return {"message": "UserCvDesign not found"}
+
+
+
+
+
+
+
+
+
+@app.get("/users")
+async def get_all_users(session: AsyncSession = Depends(get_session)):
+    # Retrieve all users from the database
+    users = await session.execute(select(User))
+    users = users.scalars().all()
+
+    # Convert the User objects to dictionaries
+    users_dicts = [
+        {
+            "id": user.id,
+            "fullname": user.fullname,
+            "email": user.email,
+            "avatar": user.avatar,
+        }
+        for user in users
+    ]
+
+    return users_dicts
+
+
+
+
 
 
 

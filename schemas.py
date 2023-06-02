@@ -18,6 +18,23 @@ class CreateCvRequest(BaseModel):
     class Config:
         orm_mode = True
 
+class CvResponse(BaseModel):
+    id: str
+    nom: str
+    prenom: str
+    address: str
+    email: str
+    city: str
+    country: str
+    postalcode: str
+    tele: str
+    brief: str
+    img_url: str
+    experiences: str
+    education: str
+    languages: str
+    user_id: int
+
 class UpdateCvRequest(BaseModel):
     nom: str = None
     prenom: str = None
@@ -49,24 +66,11 @@ class UpdateUserRequest(BaseModel):
     avatar: str = None
     hashed_password: str = None
     is_admin: bool = None
-    
-class CreateDesignRequest(BaseModel):
-    name: str
 
-class UpdateDesignRequest(BaseModel):
-    name: str = None
-
-
-class CreateCvDesignUserRequest(BaseModel):
-    cv_id: int
-    user_id: int
-    design_id: int
-
-class UpdateCvDesignUserRequest(BaseModel):
-    cv_id: int =  None
-    user_id: int =  None
-    design_id: int =  None
-
+class UserResponse(BaseModel):
+    fullname: str
+    email: str
+    avatar: str
 
 class UserLoginRequest(BaseModel):
     email: str
