@@ -146,7 +146,7 @@ async def login_user(request: UserLoginRequest, session: AsyncSession = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.get("/me", response_model=UserResponse)
+@app.get("/me")
 async def get_current_user(session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Decode the access token
     token = credentials.credentials
@@ -319,31 +319,174 @@ async def delete_cv(
 
 
 
+#Admin endpoint
 
+@app.get("/admin/users", response_model=List[UserResponse])
+async def get_all_users_as_admin(session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
 
-@app.get("/users")
-async def get_all_users(session: AsyncSession = Depends(get_session)):
+    # Retrieve the current user from the database
+    user = await session.execute(select(User).where(User.id == user_id))
+    user = user.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check if the current user is an admin
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+
     # Retrieve all users from the database
     users = await session.execute(select(User))
     users = users.scalars().all()
 
-    # Convert the User objects to dictionaries
-    users_dicts = [
-        {
-            "id": user.id,
-            "fullname": user.fullname,
-            "email": user.email,
-            "avatar": user.avatar,
-        }
+    # Create a list of UserResponse objects
+    user_responses = [
+        UserResponse(
+            id=user.id,
+            fullname=user.fullname,
+            email=user.email,
+            avatar=user.avatar,
+            is_admin=user.is_admin,
+            is_active=user.is_active
+        )
         for user in users
     ]
 
-    return users_dicts
+    return user_responses
+
+
+
+@app.put("/admin/users/{user_id}")
+async def update_user_as_admin(
+    user_id: int,
+    user_data: UpdateUserRequest,
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    admin_user_id = payload["user_id"]
+
+    # Retrieve the admin user from the database
+    admin_user = await session.execute(select(User).where(User.id == admin_user_id))
+    admin_user = admin_user.scalar_one_or_none()
+    if not admin_user:
+        raise HTTPException(status_code=404, detail="Admin user not found")
+
+    # Check if the admin user is an admin
+    if not admin_user.is_admin:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+
+    # Retrieve the user to be updated
+    user = await session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Update the user with the provided data
+    for field, value in user_data.dict(exclude_unset=True).items():
+        setattr(user, field, value)
+
+    # Commit the changes to the database
+    await session.commit()
+
+    # Return the updated user
+    return {"user":user,"message":"user updated successfully"}
+
+
+@app.delete("/admin/users/{user_id}")
+async def delete_user_as_admin(
+    user_id: int,
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    admin_user_id = payload["user_id"]
+
+    # Retrieve the admin user from the database
+    admin_user = await session.execute(select(User).where(User.id == admin_user_id))
+    admin_user = admin_user.scalar_one_or_none()
+    if not admin_user:
+        raise HTTPException(status_code=404, detail="Admin user not found")
+
+    # Check if the admin user is an admin
+    if not admin_user.is_admin:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+
+    # Retrieve the user to be deleted
+    user = await session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Delete the user from the database
+    await session.delete(user)
+    await session.commit()
+
+    # Return a success message
+    return {"message": "User deleted successfully"}
 
 
 
 
+#Get all the cvs in the database
+@app.get("/admin/cvs")
+async def get_all_cvs(
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    admin_user_id = payload["user_id"]
 
+    # Retrieve the admin user from the database
+    admin_user = await session.execute(select(User).where(User.id == admin_user_id))
+    admin_user = admin_user.scalar_one_or_none()
+    if not admin_user:
+        raise HTTPException(status_code=404, detail="Admin user not found")
+
+    # Check if the admin user is an admin
+    if not admin_user.is_admin:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+
+    # Retrieve all CVs
+    cvs = await session.execute(select(Cv))
+    
+    cvs = cvs.scalars().all()
+    cvs_dicts = []
+    for cv in cvs:
+        cv_dict = {
+            "id": cv.id,
+            "nom": cv.nom,
+            "prenom": cv.prenom,
+            "address": cv.address,
+            "email": cv.email,
+            "city": cv.city,
+            "country": cv.country,
+            "postalcode": cv.postalcode,
+            "tele": cv.tele,
+            "brief": cv.brief,
+            "img_url": cv.img_url,
+            "style": cv.style,
+            "color": cv.color,
+            "experiences": json.loads(cv.experiences),
+            "education": json.loads(cv.education),
+            "languages": json.loads(cv.languages),
+            "loisirs": json.loads(cv.loisirs),
+            "user_id": cv.user_id
+        }
+        cv_dict['experiences'] = json.loads(cv_dict['experiences'])
+        cv_dict['education'] = json.loads(cv_dict['education'])
+        cv_dict['languages'] = json.loads(cv_dict['languages'])
+        cv_dict['loisirs'] = json.loads(cv_dict['loisirs'])
+        cvs_dicts.append(cv_dict)
+    # Return the list of CVs
+    return cvs_dicts
 
 
 

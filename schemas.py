@@ -82,6 +82,8 @@ class UserResponse(BaseModel):
     fullname: str
     email: str
     avatar: str
+    is_admin:bool
+    is_active:bool
 
 class UserLoginRequest(BaseModel):
     email: str
