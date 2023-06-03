@@ -170,7 +170,7 @@ async def get_current_user(session: AsyncSession = Depends(get_session), credent
     return user_dict
 
 
-@app.get("/me/cvs", response_model=List[CvResponse])
+@app.get("/me/cvs")
 async def get_current_user_cvs(session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Decode the access token
     token = credentials.credentials
@@ -182,8 +182,29 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
     cvs = cvs.scalars().all()
 
     # Convert the CV objects to dictionaries
-    cvs_dicts = [
-        {
+    cvs_dicts = []
+    for cv in cvs:
+        try:
+            experiences = json.loads(cv.experiences)
+        except json.JSONDecodeError:
+            experiences = cv.experiences  # Store as string
+
+        try:
+            education = json.loads(cv.education)
+        except json.JSONDecodeError:
+            education = cv.education  # Store as string
+
+        try:
+            languages = json.loads(cv.languages)
+        except json.JSONDecodeError:
+            languages = cv.languages  # Store as string
+
+        try:
+            loisirs = json.loads(cv.loisirs)
+        except json.JSONDecodeError:
+            loisirs = cv.loisirs  # Store as string
+
+        cv_dict = {
             "id": cv.id,
             "nom": cv.nom,
             "prenom": cv.prenom,
@@ -195,19 +216,20 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
             "tele": cv.tele,
             "brief": cv.brief,
             "img_url": cv.img_url,
-            "style":cv.style,
-            "color":cv.color,
-            "experiences": json.loads(cv.experiences),
-            "education": json.loads(cv.education),
-            "languages": json.loads(cv.languages),
-            "loisirs":json.loads(cv.loisirs),
+            "style": cv.style,
+            "color": cv.color,
+            "experiences": experiences,
+            "education": education,
+            "languages": languages,
+            "loisirs": loisirs,
             "user_id": cv.user_id
         }
-        for cv in cvs
-    ]
+
+        cvs_dicts.append(cv_dict)
 
     # Return the CV data
     return cvs_dicts
+
 
 #generate random id
 def generate_random_id(length=10):
@@ -221,7 +243,7 @@ async def create_cv(request: CreateCvRequest, session: AsyncSession = Depends(ge
     token = credentials.credentials
     payload = decode_access_token(token)
     user_id = payload["user_id"]
-    
+
     cv_id = generate_random_id()
     # Create a new CV object from the request data
     cv = Cv(
@@ -260,9 +282,9 @@ async def create_cv(request: CreateCvRequest, session: AsyncSession = Depends(ge
 
 
 #update cv 
-@app.put("/me/cvs/{cv_id}", response_model=CvResponse)
+@app.put("/me/cvs/{cv_id}")
 async def update_cv(
-    cv_id: int,
+    cv_id: str,
     cv_data: UpdateCvRequest,
     session: AsyncSession = Depends(get_session),
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -288,12 +310,19 @@ async def update_cv(
     # Commit the changes to the database
     await session.commit()
     
-    # Return the updated CV
-    return cv
+    # Convert the cv object to a dictionary
+    cv_dict = cv.__dict__
+
+    # Remove the "_sa_instance_state" attribute
+    cv_dict.pop("_sa_instance_state", None)
+
+    # Return the updated CV as a dictionary
+    return {"CV":cv_dict,"message":"CV Updated successfully"}
+
 
 @app.delete("/me/cvs/{cv_id}")
 async def delete_cv(
-    cv_id: int,
+    cv_id: str,
     session: AsyncSession = Depends(get_session),
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
@@ -317,12 +346,6 @@ async def delete_cv(
 
     # Return a success message
     return {"message": "CV deleted successfully"}
-
-
-
-
-
-
 
 
 
