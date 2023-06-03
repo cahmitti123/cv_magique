@@ -124,7 +124,8 @@ async def register_user(request: CreateUserRequest, session: AsyncSession = Depe
     await session.commit()
 
     # Return the registered user
-    return user
+    message = f"User with ID :{user.id} created successfully"
+    return {"user":user, "message":message}
 
 @app.post("/login")
 async def login_user(request: UserLoginRequest, session: AsyncSession = Depends(get_session)):
@@ -194,9 +195,12 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
             "tele": cv.tele,
             "brief": cv.brief,
             "img_url": cv.img_url,
+            "style":cv.style,
+            "color":cv.color,
             "experiences": json.loads(cv.experiences),
             "education": json.loads(cv.education),
             "languages": json.loads(cv.languages),
+            "loisirs":json.loads(cv.loisirs),
             "user_id": cv.user_id
         }
         for cv in cvs
@@ -232,9 +236,12 @@ async def create_cv(request: CreateCvRequest, session: AsyncSession = Depends(ge
         tele=request.tele,
         brief=request.brief,
         img_url=request.img_url,
+        style=request.style,
+        color=request.color,
         experiences=json.dumps(request.experiences),
         education=json.dumps(request.education),
         languages=json.dumps(request.languages),
+        loisirs=json.dumps(request.loisirs),
         user_id=user_id
     )
 

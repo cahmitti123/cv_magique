@@ -19,9 +19,12 @@ class Cv(Base):
     tele = Column(String(256))
     brief = Column(String(50))
     img_url = Column(String(256))
+    style = Column(String(256))
+    color = Column(String(256))
     experiences = Column(Text(600))
     education = Column(Text(600))
     languages = Column(Text(600))
+    loisirs = Column(Text(600))
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
     user = relationship("User", back_populates="cvs")
 
@@ -35,6 +38,7 @@ class User(Base):
     hashed_password = Column(String(100))
     cvs = relationship("Cv", back_populates="user", cascade="all, delete")
     is_admin = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
 
 
 

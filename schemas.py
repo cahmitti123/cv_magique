@@ -11,9 +11,12 @@ class CreateCvRequest(BaseModel):
     tele: str
     brief: str
     img_url: str
+    style:str
+    color:str
     experiences: str
     education: str
     languages: str
+    loisirs: str
     user_id: int
     class Config:
         orm_mode = True
@@ -30,9 +33,12 @@ class CvResponse(BaseModel):
     tele: str
     brief: str
     img_url: str
+    style:str
+    color:str
     experiences: str
     education: str
     languages: str
+    loisirs:str
     user_id: int
 
 class UpdateCvRequest(BaseModel):
@@ -46,9 +52,12 @@ class UpdateCvRequest(BaseModel):
     tele: str = None
     brief: str = None
     img_url: str = None
+    style:str = None
+    color:str = None
     experiences: str = None
     education: str = None
     languages: str = None
+    loisirs:str = None
     user_id: int = None
 
 
@@ -59,6 +68,7 @@ class CreateUserRequest(BaseModel):
     avatar: str
     hashed_password: str
     is_admin: bool
+    is_active:bool
 
 class UpdateUserRequest(BaseModel):
     fullname: str = None
@@ -66,6 +76,7 @@ class UpdateUserRequest(BaseModel):
     avatar: str = None
     hashed_password: str = None
     is_admin: bool = None
+    is_active:bool = None
 
 class UserResponse(BaseModel):
     fullname: str
