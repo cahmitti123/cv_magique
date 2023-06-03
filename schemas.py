@@ -67,8 +67,6 @@ class CreateUserRequest(BaseModel):
     email: str
     avatar: str
     hashed_password: str
-    is_admin: bool
-    is_active:bool
 
 class UpdateUserRequest(BaseModel):
     fullname: str = None
