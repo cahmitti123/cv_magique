@@ -28,7 +28,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["http://localhost:3000"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -180,30 +180,10 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
     # Retrieve the CVs of the current user from the database
     cvs = await session.execute(select(Cv).where(Cv.user_id == user_id))
     cvs = cvs.scalars().all()
-
+     
     # Convert the CV objects to dictionaries
     cvs_dicts = []
     for cv in cvs:
-        try:
-            experiences = json.loads(cv.experiences)
-        except json.JSONDecodeError:
-            experiences = cv.experiences  # Store as string
-
-        try:
-            education = json.loads(cv.education)
-        except json.JSONDecodeError:
-            education = cv.education  # Store as string
-
-        try:
-            languages = json.loads(cv.languages)
-        except json.JSONDecodeError:
-            languages = cv.languages  # Store as string
-
-        try:
-            loisirs = json.loads(cv.loisirs)
-        except json.JSONDecodeError:
-            loisirs = cv.loisirs  # Store as string
-
         cv_dict = {
             "id": cv.id,
             "nom": cv.nom,
@@ -218,13 +198,16 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
             "img_url": cv.img_url,
             "style": cv.style,
             "color": cv.color,
-            "experiences": experiences,
-            "education": education,
-            "languages": languages,
-            "loisirs": loisirs,
+            "experiences": json.loads(cv.experiences),
+            "education": json.loads(cv.education),
+            "languages": json.loads(cv.languages),
+            "loisirs": json.loads(cv.loisirs),
             "user_id": cv.user_id
         }
-
+        cv_dict['experiences'] = json.loads(cv_dict['experiences'])
+        cv_dict['education'] = json.loads(cv_dict['education'])
+        cv_dict['languages'] = json.loads(cv_dict['languages'])
+        cv_dict['loisirs'] = json.loads(cv_dict['loisirs'])
         cvs_dicts.append(cv_dict)
 
     # Return the CV data
@@ -238,35 +221,22 @@ def generate_random_id(length=10):
 
 #create user cv
 @app.post("/me/cvs")
-async def create_cv(request: CreateCvRequest, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def create_cv(cv: CreateCvRequest, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Decode the access token
     token = credentials.credentials
     payload = decode_access_token(token)
     user_id = payload["user_id"]
-
     cv_id = generate_random_id()
     # Create a new CV object from the request data
-    cv = Cv(
-        id = cv_id,
-        nom=request.nom,
-        prenom=request.prenom,
-        address=request.address,
-        email=request.email,
-        city=request.city,
-        country=request.country,
-        postalcode=request.postalcode,
-        tele=request.tele,
-        brief=request.brief,
-        img_url=request.img_url,
-        style=request.style,
-        color=request.color,
-        experiences=json.dumps(request.experiences),
-        education=json.dumps(request.education),
-        languages=json.dumps(request.languages),
-        loisirs=json.dumps(request.loisirs),
-        user_id=user_id
-    )
-
+    db_cv = cv.dict(exclude_none=True)
+    db_cv["id"] = cv_id
+    db_cv["experiences"] = json.dumps(cv.experiences)  # Convert experiences to JSON
+    db_cv["education"] = json.dumps(cv.education) 
+    db_cv["languages"] = json.dumps(cv.languages) 
+    db_cv["loisirs"] = json.dumps(cv.loisirs) 
+    db_cv["user_id"] = user_id
+    cv = Cv(**db_cv)
+    
     # Save the new CV to the database
     session.add(cv)
     await session.commit()
