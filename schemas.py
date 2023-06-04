@@ -19,7 +19,6 @@ class CreateCvRequest(BaseModel):
     languages: str
     skills: str 
     loisirs: str
-    user_id: int
     class Config:
         orm_mode = True
 
@@ -43,7 +42,7 @@ class CvResponse(BaseModel):
     languages: str
     skills: str 
     loisirs:str
-    user_id: int
+    
 
 class UpdateCvRequest(BaseModel):
     nom: str = None
@@ -64,7 +63,7 @@ class UpdateCvRequest(BaseModel):
     languages: str = None
     skills: str = None
     loisirs:str = None
-    user_id: int = None
+    
 
 
 
@@ -78,7 +77,6 @@ class UpdateUserRequest(BaseModel):
     fullname: str = None
     email: str = None
     avatar: str = None
-    hashed_password: str = None
     is_admin: bool = None
     is_active:bool = None
 
