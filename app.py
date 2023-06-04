@@ -163,7 +163,8 @@ async def get_current_user(session: AsyncSession = Depends(get_session), credent
     user_dict = {
         "fullname": user.fullname,
         "email": user.email,
-        "avatar": user.avatar
+        "avatar": user.avatar,
+        "is_admin":user.is_admin
     }
 
     # Return the user data
@@ -198,15 +199,18 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
             "img_url": cv.img_url,
             "style": cv.style,
             "color": cv.color,
+            "description":cv.description,
             "experiences": json.loads(cv.experiences),
             "education": json.loads(cv.education),
             "languages": json.loads(cv.languages),
+            "skills": json.loads(cv.skills),
             "loisirs": json.loads(cv.loisirs),
             "user_id": cv.user_id
         }
         cv_dict['experiences'] = json.loads(cv_dict['experiences'])
         cv_dict['education'] = json.loads(cv_dict['education'])
         cv_dict['languages'] = json.loads(cv_dict['languages'])
+        cv_dict['skills'] = json.loads(cv_dict['skills'])
         cv_dict['loisirs'] = json.loads(cv_dict['loisirs'])
         cvs_dicts.append(cv_dict)
 
@@ -233,6 +237,7 @@ async def create_cv(cv: CreateCvRequest, session: AsyncSession = Depends(get_ses
     db_cv["experiences"] = json.dumps(cv.experiences)  # Convert experiences to JSON
     db_cv["education"] = json.dumps(cv.education) 
     db_cv["languages"] = json.dumps(cv.languages) 
+    db_cv["skills"] = json.dumps(cv.skills) 
     db_cv["loisirs"] = json.dumps(cv.loisirs) 
     db_cv["user_id"] = user_id
     cv = Cv(**db_cv)
@@ -319,8 +324,10 @@ async def delete_cv(
 
 
 
-#Admin endpoint
+#Admin endpoints
+#get admin profile
 
+#get users
 @app.get("/admin/users", response_model=List[UserResponse])
 async def get_all_users_as_admin(session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Decode the access token
@@ -474,15 +481,18 @@ async def get_all_cvs(
             "img_url": cv.img_url,
             "style": cv.style,
             "color": cv.color,
+            "description":cv.description,
             "experiences": json.loads(cv.experiences),
             "education": json.loads(cv.education),
             "languages": json.loads(cv.languages),
+            "skills":json.loads(cv.skills),
             "loisirs": json.loads(cv.loisirs),
             "user_id": cv.user_id
         }
         cv_dict['experiences'] = json.loads(cv_dict['experiences'])
         cv_dict['education'] = json.loads(cv_dict['education'])
         cv_dict['languages'] = json.loads(cv_dict['languages'])
+        cv_dict['skills'] = json.loads(cv_dict['skills'])
         cv_dict['loisirs'] = json.loads(cv_dict['loisirs'])
         cvs_dicts.append(cv_dict)
     # Return the list of CVs
