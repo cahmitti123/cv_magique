@@ -13,9 +13,11 @@ class CreateCvRequest(BaseModel):
     img_url: str
     style:str
     color:str
+    description:str
     experiences: str
     education: str
     languages: str
+    skills: str 
     loisirs: str
     user_id: int
     class Config:
@@ -35,9 +37,11 @@ class CvResponse(BaseModel):
     img_url: str
     style:str
     color:str
+    description:str
     experiences: str
     education: str
     languages: str
+    skills: str 
     loisirs:str
     user_id: int
 
@@ -54,9 +58,11 @@ class UpdateCvRequest(BaseModel):
     img_url: str = None
     style:str = None
     color:str = None
+    description:str = None
     experiences: str = None
     education: str = None
     languages: str = None
+    skills: str = None
     loisirs:str = None
     user_id: int = None
 
