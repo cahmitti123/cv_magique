@@ -45,24 +45,24 @@ class CvResponse(BaseModel):
     
 
 class UpdateCvRequest(BaseModel):
-    nom: str = None
-    prenom: str = None
-    address: str = None
-    email: str = None
-    city: str = None
-    country: str = None
-    postalcode: str = None
-    tele: str = None
-    brief: str = None
-    img_url: str = None
-    style:str = None
-    color:str = None
-    description:str = None
-    experiences: str = None
-    education: str = None
-    languages: str = None
-    skills: str = None
-    loisirs:str = None
+    nom: str 
+    prenom: str 
+    address: str 
+    email: str 
+    city: str 
+    country: str 
+    postalcode: str  
+    tele: str  
+    brief: str 
+    img_url: str 
+    style:str 
+    color:str  
+    description:str 
+    experiences: str
+    education: str 
+    languages: str 
+    skills: str  
+    loisirs:str  
     
 
 
