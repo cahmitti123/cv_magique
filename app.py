@@ -259,6 +259,54 @@ async def create_cv(cv: CreateCvRequest, session: AsyncSession = Depends(get_ses
         "message": message
     }
 
+#duplicate cv
+@app.post("/me/cvs/duplicate/{cv_id}")
+async def duplicate_cv(cv_id: str, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    # Retrieve the CV to be duplicated
+    cv = await session.get(Cv, cv_id)
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    # Check if the CV belongs to the current user
+    if cv.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+
+    # Create a new CV object with the same data as the original CV
+    new_cv = Cv(
+        id=generate_random_id(),
+        nom=cv.nom,
+        prenom=cv.prenom,
+        address=cv.address,
+        email=cv.email,
+        city=cv.city,
+        country=cv.country,
+        postalcode=cv.postalcode,
+        tele=cv.tele,
+        brief=cv.brief,
+        img_url=cv.img_url,
+        style=cv.style,
+        color=cv.color,
+        description=cv.description,
+        experiences=cv.experiences,
+        education=cv.education,
+        languages=cv.languages,
+        skills=cv.skills,
+        loisirs=cv.loisirs,
+        user_id=user_id
+    )
+
+    # Save the new CV to the database
+    session.add(new_cv)
+    await session.commit()
+
+    # Return the duplicated CV
+    return {"cv": new_cv, "message": "CV duplicated successfully"}
+
 
 #update cv 
 @app.put("/me/cvs/{cv_id}")
@@ -494,54 +542,6 @@ async def get_all_cvs(
 
 
 
-
-#duplicate cv
-@app.post("/me/cvs/{cv_id}/duplicate")
-async def duplicate_cv(cv_id: str, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
-    # Decode the access token
-    token = credentials.credentials
-    payload = decode_access_token(token)
-    user_id = payload["user_id"]
-
-    # Retrieve the CV to be duplicated
-    cv = await session.get(Cv, cv_id)
-    if not cv:
-        raise HTTPException(status_code=404, detail="CV not found")
-
-    # Check if the CV belongs to the current user
-    if cv.user_id != user_id:
-        raise HTTPException(status_code=403, detail="Unauthorized access")
-
-    # Create a new CV object with the same data as the original CV
-    new_cv = Cv(
-        id=generate_random_id(),
-        nom=cv.nom,
-        prenom=cv.prenom,
-        address=cv.address,
-        email=cv.email,
-        city=cv.city,
-        country=cv.country,
-        postalcode=cv.postalcode,
-        tele=cv.tele,
-        brief=cv.brief,
-        img_url=cv.img_url,
-        style=cv.style,
-        color=cv.color,
-        description=cv.description,
-        experiences=cv.experiences,
-        education=cv.education,
-        languages=cv.languages,
-        skills=cv.skills,
-        loisirs=cv.loisirs,
-        user_id=user_id
-    )
-
-    # Save the new CV to the database
-    session.add(new_cv)
-    await session.commit()
-
-    # Return the duplicated CV
-    return {"cv": new_cv, "message": "CV duplicated successfully"}
 
 
 
