@@ -27,7 +27,7 @@ class Cv(Base):
     languages = Column(Text(600))
     skills = Column(Text(600))
     loisirs = Column(Text(600))
-    is_experience = Column(Boolean, default=True)
+    is_experiences = Column(Boolean, default=True)
     is_education = Column(Boolean, default=True)
     is_languages = Column(Boolean, default=True)
     is_skills = Column(Boolean, default=True)
