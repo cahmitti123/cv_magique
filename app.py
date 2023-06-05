@@ -258,45 +258,38 @@ async def create_cv(cv: CreateCvRequest, session: AsyncSession = Depends(get_ses
 
 #update cv 
 @app.put("/me/cvs/{cv_id}")
-async def update_cv(
-    cv_id: str,
-    cv_data: UpdateCvRequest,
-    session: AsyncSession = Depends(get_session),
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-):
+async def update_cv(cv_id: str, cv: UpdateCvRequest, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Decode the access token
     token = credentials.credentials
     payload = decode_access_token(token)
     user_id = payload["user_id"]
 
-    # Retrieve the CV from the database
-    cv = await session.get(Cv, cv_id)
-    if not cv:
+    # Retrieve the CV object from the database
+    db_cv = await session.get(Cv, cv_id)
+    
+    if db_cv is None:
         raise HTTPException(status_code=404, detail="CV not found")
 
-    # Check if the CV belongs to the current user
-    if cv.user_id != user_id:
-        raise HTTPException(status_code=403, detail="Unauthorized access")
-
-    # Update the CV with the provided data
-    for field, value in cv_data.dict().items():
-        setattr(cv, field, value)
-
-    # Commit the changes to the database
+    # Update the CV object with the request data
+    db_cv.experiences = json.dumps(cv.experiences)
+    db_cv.education = json.dumps(cv.education)
+    db_cv.languages = json.dumps(cv.languages)
+    db_cv.skills = json.dumps(cv.skills)
+    db_cv.loisirs = json.dumps(cv.loisirs)
+    db_cv.user_id = user_id
+    
+    # Save the updated CV to the database
     await session.commit()
-    
-    # Convert the cv object to a dictionary
-    cv_dict = cv.__dict__
-    
-    # Remove the "_sa_instance_state" attribute
-    cv_dict.pop("_sa_instance_state", None)
-    cv_dict["experiences"] = json.dumps(cv.experiences)  # Convert experiences to JSON
-    cv_dict["education"] = json.dumps(cv.education) 
-    cv_dict["languages"] = json.dumps(cv.languages) 
-    cv_dict["skills"] = json.dumps(cv.skills) 
-    cv_dict["loisirs"] = json.dumps(cv.loisirs) 
-    # Return the updated CV as a dictionary
-    return {"CV":cv_dict,"message":"CV Updated successfully"}
+
+    # Create a success message
+    message = f"CV with ID {cv_id} updated successfully"
+
+    # Return the updated CV and the success message as a response
+    return {
+        "cv": db_cv,
+        "message": message
+    }
+
 
 
 @app.delete("/me/cvs/{cv_id}")
