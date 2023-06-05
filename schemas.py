@@ -19,6 +19,11 @@ class CreateCvRequest(BaseModel):
     languages: str
     skills: str 
     loisirs: str
+    is_experiences = bool
+    is_education = bool
+    is_languages = bool
+    is_skills = bool
+    is_loisirs = bool
     class Config:
         orm_mode = True
 
@@ -42,6 +47,11 @@ class CvResponse(BaseModel):
     languages: str
     skills: str 
     loisirs:str
+    is_experiences = bool
+    is_education = bool
+    is_languages = bool
+    is_skills = bool
+    is_loisirs = bool
     
 
 class UpdateCvRequest(BaseModel):
@@ -62,7 +72,12 @@ class UpdateCvRequest(BaseModel):
     education: str 
     languages: str 
     skills: str  
-    loisirs:str  
+    loisirs:str 
+    is_experiences = bool
+    is_education = bool
+    is_languages = bool
+    is_skills = bool
+    is_loisirs = bool
     
 
 
