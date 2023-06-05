@@ -212,6 +212,12 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
             "languages": try_json_loads(cv.languages),
             "skills": try_json_loads(cv.skills),
             "loisirs": try_json_loads(cv.loisirs),
+            "is_experiences":cv.is_experiences,
+            "is_education":cv.is_education,
+            "is_languages":cv.is_languages,
+            "is_education":cv.is_education,
+            "is_skills":cv.is_skills,
+            "is_loisirs":cv.is_loisirs,
             "user_id": cv.user_id
         }
        
@@ -297,6 +303,11 @@ async def duplicate_cv(cv_id: str, session: AsyncSession = Depends(get_session),
         languages=cv.languages,
         skills=cv.skills,
         loisirs=cv.loisirs,
+        is_experiences=cv.is_experiences,
+        is_education=cv.is_education,
+        is_languages=cv.is_languages,
+        is_skills=cv.is_skills,
+        is_loisirs=cv.is_loisirs,
         user_id=user_id
     )
 
@@ -529,6 +540,11 @@ async def get_all_cvs(
             "languages": json.loads(cv.languages),
             "skills":json.loads(cv.skills),
             "loisirs": json.loads(cv.loisirs),
+            "is_experiences": cv.is_experiences,
+            "is_education": cv.is_education,
+            "is_languages": cv.is_languages,
+            "is_skills":cv.is_skills,
+            "is_loisirs": cv.is_loisirs,
             "user_id": cv.user_id
         }
         cv_dict['experiences'] = json.loads(cv_dict['experiences'])
