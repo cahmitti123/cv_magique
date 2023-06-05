@@ -258,37 +258,29 @@ async def create_cv(cv: CreateCvRequest, session: AsyncSession = Depends(get_ses
 
 #update cv 
 @app.put("/me/cvs/{cv_id}")
-async def update_cv(cv_id: str, cv: UpdateCvRequest, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def update_cv(cv_id: str, cv_data: UpdateCvRequest, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Decode the access token
     token = credentials.credentials
     payload = decode_access_token(token)
     user_id = payload["user_id"]
-
-    # Retrieve the CV object from the database
-    db_cv = await session.get(Cv, cv_id)
     
-    if db_cv is None:
-        raise HTTPException(status_code=404, detail="CV not found")
+    # Fetch the CV object from the database
+    cv = session.query(Cv).filter(Cv.id == cv_id, Cv.user_id == user_id).first()
+    if not cv:
+        return {"message": "CV not found"}
 
-    # Update the CV object with the request data
-    db_cv.experiences = json.dumps(cv.experiences)
-    db_cv.education = json.dumps(cv.education)
-    db_cv.languages = json.dumps(cv.languages)
-    db_cv.skills = json.dumps(cv.skills)
-    db_cv.loisirs = json.dumps(cv.loisirs)
-    db_cv.user_id = user_id
+    # Update the CV object with the new data
+    cv.experiences = json.dumps(cv_data.experiences)
+    cv.education = json.dumps(cv_data.education)
+    cv.languages = json.dumps(cv_data.languages)
+    cv.skills = json.dumps(cv_data.skills)
+    cv.loisirs = json.dumps(cv_data.loisirs)
     
-    # Save the updated CV to the database
-    await session.commit()
+    # Commit the changes to the database
+    session.commit()
 
-    # Create a success message
-    message = f"CV with ID {cv_id} updated successfully"
-
-    # Return the updated CV and the success message as a response
-    return {
-        "cv": db_cv,
-        "message": message
-    }
+    # Return the updated CV
+    return {"cv": cv, "message": "CV updated successfully"}
 
 
 
