@@ -287,10 +287,14 @@ async def update_cv(
     
     # Convert the cv object to a dictionary
     cv_dict = cv.__dict__
-
+    
     # Remove the "_sa_instance_state" attribute
     cv_dict.pop("_sa_instance_state", None)
-
+    cv_dict["experiences"] = json.dumps(cv.experiences)  # Convert experiences to JSON
+    cv_dict["education"] = json.dumps(cv.education) 
+    cv_dict["languages"] = json.dumps(cv.languages) 
+    cv_dict["skills"] = json.dumps(cv.skills) 
+    cv_dict["loisirs"] = json.dumps(cv.loisirs) 
     # Return the updated CV as a dictionary
     return {"CV":cv_dict,"message":"CV Updated successfully"}
 
