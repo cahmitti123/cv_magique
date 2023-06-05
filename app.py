@@ -7,6 +7,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import List
 from passlib.context import CryptContext
 import jwt, json
+from json.decoder import JSONDecodeError
 from datetime import datetime, timedelta
 from models import User
 from schemas import CreateCvRequest,CreateUserRequest,UserLoginRequest,UpdateCvRequest,UpdateUserRequest,CvResponse,UserResponse
@@ -170,7 +171,12 @@ async def get_current_user(session: AsyncSession = Depends(get_session), credent
     # Return the user data
     return user_dict
 
-
+def try_json_loads(value):
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return value
+    
 @app.get("/me/cvs")
 async def get_current_user_cvs(session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Decode the access token
@@ -181,7 +187,7 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
     # Retrieve the CVs of the current user from the database
     cvs = await session.execute(select(Cv).where(Cv.user_id == user_id))
     cvs = cvs.scalars().all()
-     
+    
     # Convert the CV objects to dictionaries
     cvs_dicts = []
     for cv in cvs:
@@ -199,19 +205,16 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
             "img_url": cv.img_url,
             "style": cv.style,
             "color": cv.color,
-            "description":cv.description,
-            "experiences": json.loads(cv.experiences),
-            "education": json.loads(cv.education),
-            "languages": json.loads(cv.languages),
-            "skills": json.loads(cv.skills),
-            "loisirs": json.loads(cv.loisirs),
+            "description": cv.description,
+            "experiences": try_json_loads(cv.experiences),
+            "education": try_json_loads(cv.education),
+            "languages": try_json_loads(cv.languages),
+            "skills": try_json_loads(cv.skills),
+            "loisirs": try_json_loads(cv.loisirs),
             "user_id": cv.user_id
         }
-        cv_dict['experiences'] = json.loads(cv_dict['experiences'])
-        cv_dict['education'] = json.loads(cv_dict['education'])
-        cv_dict['languages'] = json.loads(cv_dict['languages'])
-        cv_dict['skills'] = json.loads(cv_dict['skills'])
-        cv_dict['loisirs'] = json.loads(cv_dict['loisirs'])
+       
+        
         cvs_dicts.append(cv_dict)
 
     # Return the CV data
@@ -262,22 +265,23 @@ async def update_cv(cv_id: str, cv_data: UpdateCvRequest, session: AsyncSession 
     # Decode the access token
     token = credentials.credentials
     payload = decode_access_token(token)
-    user_id = payload["user_id"]
-    
-    # Fetch the CV object from the database
-    cv = session.query(Cv).filter(Cv.id == cv_id, Cv.user_id == user_id).first()
-    if not cv:
-        return {"message": "CV not found"}
+    current_user_id = payload["user_id"]
 
-    # Update the CV object with the new data
-    cv.experiences = json.dumps(cv_data.experiences)
-    cv.education = json.dumps(cv_data.education)
-    cv.languages = json.dumps(cv_data.languages)
-    cv.skills = json.dumps(cv_data.skills)
-    cv.loisirs = json.dumps(cv_data.loisirs)
-    
+    # Retrieve the CV to be updated
+    cv = await session.get(Cv, cv_id)
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    # Check if the current user has permission to update their own CV
+    if current_user_id != cv.user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+
+    # Update the CV with the provided data
+    for field, value in cv_data.dict(exclude_unset=True).items():
+        setattr(cv, field, value)
+
     # Commit the changes to the database
-    session.commit()
+    await session.commit()
 
     # Return the updated CV
     return {"cv": cv, "message": "CV updated successfully"}
