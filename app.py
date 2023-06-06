@@ -6,6 +6,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import List
 from passlib.context import CryptContext
+import os
 import jwt, json
 from json.decoder import JSONDecodeError
 from datetime import datetime, timedelta
@@ -63,6 +64,9 @@ SECRET_KEY = os.environ.get("SECRET_KEY")  # Change this to your desired secret 
 ALGORITHM = os.environ.get("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES")
 
+
+
+ 
 
 # Define the get_session function as a dependency
 async def get_session() -> AsyncSession:
@@ -212,12 +216,12 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
             "languages": try_json_loads(cv.languages),
             "skills": try_json_loads(cv.skills),
             "loisirs": try_json_loads(cv.loisirs),
-            "is_experiences":cv.is_experiences,
-            "is_education":cv.is_education,
-            "is_languages":cv.is_languages,
-            "is_education":cv.is_education,
-            "is_skills":cv.is_skills,
-            "is_loisirs":cv.is_loisirs,
+            "isexperiences":cv.activeexperiences,
+            "iseducation":cv.activeeducation,
+            "islanguages":cv.activelanguages,
+            "iseducation":cv.activeeducation,
+            "isskills":cv.activeskills,
+            "isloisirs":cv.activeloisirs,
             "user_id": cv.user_id
         }
        
@@ -555,8 +559,6 @@ async def get_all_cvs(
         cvs_dicts.append(cv_dict)
     # Return the list of CVs
     return cvs_dicts
-
-
 
 
 

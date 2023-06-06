@@ -19,11 +19,11 @@ class CreateCvRequest(BaseModel):
     languages: str
     skills: str 
     loisirs: str
-    is_experiences = str
-    is_education = str
-    is_languages = str
-    is_skills = str
-    is_loisirs = str
+    is_experiences : bool
+    is_education : bool
+    is_languages : bool
+    is_skills : bool
+    is_loisirs : bool
     class Config:
         orm_mode = True
 
@@ -47,11 +47,12 @@ class CvResponse(BaseModel):
     languages: str
     skills: str 
     loisirs:str
-    is_experiences = str
-    is_education = str
-    is_languages = str
-    is_skills = str
-    is_loisirs = str
+    activeexperiences : bool
+    activeeducation : bool
+    activelanguages : bool
+    activeskills : bool
+    activeloisirs : bool
+    
     
 
 class UpdateCvRequest(BaseModel):
@@ -73,11 +74,11 @@ class UpdateCvRequest(BaseModel):
     languages: str 
     skills: str  
     loisirs:str 
-    is_experiences = str
-    is_education = str
-    is_languages = str
-    is_skills = str
-    is_loisirs = str
+    activeexperiences : bool
+    activeeducation : bool
+    activelanguages : bool
+    activeskills : bool
+    activeloisirs : bool
     
 
 
