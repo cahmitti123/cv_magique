@@ -47,11 +47,11 @@ class CvResponse(BaseModel):
     languages: str
     skills: str 
     loisirs:str
-    activeexperiences : bool
-    activeeducation : bool
-    activelanguages : bool
-    activeskills : bool
-    activeloisirs : bool
+    is_experiences : bool
+    is_education : bool
+    is_languages : bool
+    is_skills : bool
+    is_loisirs : bool
     
     
 
@@ -74,11 +74,11 @@ class UpdateCvRequest(BaseModel):
     languages: str 
     skills: str  
     loisirs:str 
-    activeexperiences : bool
-    activeeducation : bool
-    activelanguages : bool
-    activeskills : bool
-    activeloisirs : bool
+    is_experiences : bool
+    is_education : bool
+    is_languages : bool
+    is_skills : bool
+    is_loisirs : bool
     
 
 
