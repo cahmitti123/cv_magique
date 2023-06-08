@@ -667,6 +667,8 @@ async def duplicate_letter(letter_id: str, session: AsyncSession = Depends(get_s
         objet=letter.objet,
         date=letter.date,
         lieu=letter.lieu,
+        style = letter.style,
+        color = letter.color,
         lettre_de_motivation=letter.lettre_de_motivation,
         signature=letter.signature,
         is_active=letter.is_active,
@@ -765,6 +767,8 @@ async def get_current_user_letters(session: AsyncSession = Depends(get_session),
             "objet": letter.objet,
             "date": letter.date,
             "lieu": letter.lieu,
+            "style":letter.style,
+            "color":letter.color,
             "lettre_de_motivation": letter.lettre_de_motivation,
             "signature": letter.signature,
             "is_active": letter.is_active,
@@ -828,7 +832,7 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
             await session.commit()
             
             request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'avatar': user.avatar}
-            return JSONResponse(content=user_info)
+            return JSONResponse(content={'token':token})
 
     return JSONResponse(content={'message': 'User information not available'}) 
 
