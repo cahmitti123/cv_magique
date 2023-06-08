@@ -7,6 +7,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import List
 from passlib.context import CryptContext
 import os
+from fastapi import UploadFile,File
 import jwt, json
 from json.decoder import JSONDecodeError
 from datetime import datetime, timedelta
@@ -114,6 +115,8 @@ def decode_access_token(token: str) -> dict:
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+
+############################# AUTHENTICATION ##############################
 
 @app.post("/register", status_code=201)
 async def register_user(request: CreateUserRequest, session: AsyncSession = Depends(get_session)):
@@ -236,7 +239,20 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
     # Return the CV data
     return cvs_dicts
 
+@app.post("/me/cvs/{cv_id}/image")
+async def import_cv_image(cv_id: int, image: UploadFile = File(...), session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Save the uploaded image
+    image_path = f"cv_images/{cv_id}_{image.filename}"
+    with open(image_path, "wb") as f:
+        f.write(await image.read())
 
+    # Update the CV's image URL in the database
+    cv = await session.execute(select(Cv).where(Cv.id == cv_id)).scalar()
+    cv.img_url = image_path
+    await session.commit()
+
+    # Return a success message
+    return {"message": "CV image imported successfully"}
 #generate random id
 def generate_random_id(length=10):
     import string
@@ -742,6 +758,12 @@ async def get_current_user_letters(session: AsyncSession = Depends(get_session),
 
 ########################## GOOGLE AUTHENTICATION ###########################
 
+@app.get('/')
+async def homepage(request: Request):
+    user = request.session.get('user')
+    if user:
+        return JSONResponse(content=user)
+    return JSONResponse(content={'message': 'Not logged in'})
 
 
 CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
@@ -754,12 +776,6 @@ oauth.register(
 )
 
 
-@app.get('/')
-async def homepage(request: Request):
-    user = request.session.get('user')
-    if user:
-        return JSONResponse(content=user)
-    return JSONResponse(content={'message': 'Not logged in'})
 
 @app.get('/google/login')
 async def login(request: Request):
