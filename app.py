@@ -140,7 +140,7 @@ async def register_user(request: CreateUserRequest, session: AsyncSession = Depe
     message = f"User with ID :{user.id} created successfully"
     return {"user":user, "message":message}
 
-@app.post("/user/login")
+@app.post("/login")
 async def login_user(request: UserLoginRequest, session: AsyncSession = Depends(get_session)):
     # Check if the user exists
     user = await session.execute(select(User).where(User.email == request.email))
