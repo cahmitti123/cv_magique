@@ -43,11 +43,35 @@ class User(Base):
     email = Column(String(50), unique=True, index=True)
     avatar = Column(String(100))
     hashed_password = Column(String(100))
-    cvs = relationship("Cv", back_populates="user", cascade="all, delete")
     is_admin = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
+    cvs = relationship("Cv", back_populates="user", cascade="all, delete")
+    letters = relationship("Letter", back_populates="user", cascade="all, delete")
 
 
 
 
-
+class Letter(Base):
+    __tablename__ = "letters"
+    id = Column(String(50), primary_key=True, index=True)
+    a_prenom= Column(String(256))
+    a_nom= Column(String(256))
+    a_email= Column(String(256))
+    a_ville= Column(String(256))
+    a_adresse= Column(String(256))
+    a_Code_postal= Column(String(256))
+    a_tele= Column(String(256))
+    b_prenom= Column(String(256))
+    b_nom= Column(String(256))
+    b_entreprise= Column(String(256))
+    b_ville= Column(String(256))
+    b_adresse= Column(String(256))
+    b_Code_postal= Column(String(256))
+    objet= Column(String(256))
+    date= Column(String(256))
+    lieu= Column(String(256))
+    lettre_de_motivation= Column(Text(600))
+    signature= Column(String(256))
+    is_active= Column(Boolean, default=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+    user = relationship("User", back_populates="letters")

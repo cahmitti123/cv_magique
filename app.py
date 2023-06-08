@@ -11,15 +11,18 @@ import jwt, json
 from json.decoder import JSONDecodeError
 from datetime import datetime, timedelta
 from models import User
-from schemas import CreateCvRequest,CreateUserRequest,UserLoginRequest,UpdateCvRequest,UpdateUserRequest,CvResponse,UserResponse
+from schemas import CreateCvRequest,CreateUserRequest,UserLoginRequest,UpdateCvRequest,UpdateUserRequest,UserResponse,CreateLetterRequest,UpdateLetterRequest
 import json
 import uvicorn
 import random
-from models import Cv,User
-
+from models import Cv,User, Letter
 from fastapi.middleware.cors import CORSMiddleware
 from models import Base
-
+from starlette.config import Config
+from starlette.requests import Request
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.responses import JSONResponse
+from authlib.integrations.starlette_client import OAuth, OAuthError
 from dotenv import load_dotenv
 
 import os
@@ -27,7 +30,7 @@ import os
 load_dotenv()
 
 app = FastAPI()
-
+app.add_middleware(SessionMiddleware, secret_key="!secret")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  
@@ -35,6 +38,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+config = Config('.env')
+oauth = OAuth(config)
 
 DB_HOST = os.environ.get('DB_HOST')
 DB_PORT = os.environ.get('DB_PORT')
@@ -66,8 +72,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES")
 
 
 
- 
-
 # Define the get_session function as a dependency
 async def get_session() -> AsyncSession:
     async with async_session() as session:
@@ -75,10 +79,11 @@ async def get_session() -> AsyncSession:
 
 ### the API CRUD ###
 #API root
+'''
 @app.get("/")
 async def welcome_api():
     return "this is a backend api of cvmagique"
-
+'''
 
 
 pwd_context = CryptContext(schemes=["bcrypt"])
@@ -132,7 +137,7 @@ async def register_user(request: CreateUserRequest, session: AsyncSession = Depe
     message = f"User with ID :{user.id} created successfully"
     return {"user":user, "message":message}
 
-@app.post("/login")
+@app.post("/user/login")
 async def login_user(request: UserLoginRequest, session: AsyncSession = Depends(get_session)):
     # Check if the user exists
     user = await session.execute(select(User).where(User.email == request.email))
@@ -381,8 +386,7 @@ async def delete_cv(
 
 
 
-#Admin endpoints
-#get admin profile
+####################### ADMIN CRUD #################################
 
 #get users
 @app.get("/admin/users", response_model=List[UserResponse])
@@ -420,7 +424,6 @@ async def get_all_users_as_admin(session: AsyncSession = Depends(get_session), c
     ]
 
     return user_responses
-
 
 
 @app.put("/admin/users/{user_id}")
@@ -559,6 +562,248 @@ async def get_all_cvs(
         cvs_dicts.append(cv_dict)
     # Return the list of CVs
     return cvs_dicts
+
+
+
+
+
+
+########### Letters  CRUD #####################
+@app.post("/me/letters")
+async def create_letter(letter: CreateLetterRequest, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+    letter_id = generate_random_id()
+    
+    # Create a new Letter object from the request data
+    db_letter = letter.dict(exclude_none=True)
+    db_letter["id"] = letter_id
+    db_letter["user_id"] = user_id
+    letter = Letter(**db_letter)
+    
+    # Save the new letter to the database
+    session.add(letter)
+    await session.commit()
+
+    # Create a success message
+    message = f"Letter with ID {letter.id} created successfully"
+
+    # Return the created letter and the success message as a response
+    return {
+        "letter": letter,
+        "message": message
+    }
+
+@app.post("/me/letters/duplicate/{letter_id}")
+async def duplicate_letter(letter_id: str, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    # Retrieve the letter to be duplicated
+    letter = await session.get(Letter, letter_id)
+    if not letter:
+        raise HTTPException(status_code=404, detail="Letter not found")
+
+    # Check if the letter belongs to the current user
+    if letter.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+
+    # Create a new letter object with the same data as the original letter
+    new_letter = Letter(
+        id=generate_random_id(),
+        a_prenom=letter.a_prenom,
+        a_nom=letter.a_nom,
+        a_email=letter.a_email,
+        a_ville=letter.a_ville,
+        a_adresse=letter.a_adresse,
+        a_Code_postal=letter.a_Code_postal,
+        a_tele=letter.a_tele,
+        b_prenom=letter.b_prenom,
+        b_nom=letter.b_nom,
+        b_entreprise=letter.b_entreprise,
+        b_ville=letter.b_ville,
+        b_adresse=letter.b_adresse,
+        b_Code_postal=letter.b_Code_postal,
+        objet=letter.objet,
+        date=letter.date,
+        lieu=letter.lieu,
+        lettre_de_motivation=letter.lettre_de_motivation,
+        signature=letter.signature,
+        is_active=letter.is_active,
+        user_id=user_id
+    )
+
+    # Save the new letter to the database
+    session.add(new_letter)
+    await session.commit()
+
+    # Return the duplicated letter
+    return {"letter": new_letter, "message": "Letter duplicated successfully"}
+
+@app.put("/me/letters/{letter_id}")
+async def update_letter(letter_id: str, letter_data: UpdateLetterRequest, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    current_user_id = payload["user_id"]
+
+    # Retrieve the letter to be updated
+    letter = await session.get(Letter, letter_id)
+    if not letter:
+        raise HTTPException(status_code=404, detail="Letter not found")
+
+    # Check if the current user has permission to update their own letter
+    if current_user_id != letter.user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+
+    # Update the letter with the provided data
+    for field, value in letter_data.dict(exclude_unset=True).items():
+        setattr(letter, field, value)
+
+    # Commit the changes to the database
+    await session.commit()
+
+    # Return the updated letter
+    return {"letter": letter, "message": "Letter updated successfully"}
+
+@app.delete("/me/letters/{letter_id}")
+async def delete_letter(
+    letter_id: str,
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    # Retrieve the letter from the database
+    letter = await session.get(Letter, letter_id)
+    if not letter:
+        raise HTTPException(status_code=404, detail="Letter not found")
+
+    # Check if the letter belongs to the current user
+    if letter.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+
+    # Delete the letter from the database
+    await session.delete(letter)
+    await session.commit()
+
+    # Return a success message
+    return {"message": "Letter deleted successfully"}
+
+@app.get("/me/letters")
+async def get_current_user_letters(session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    # Retrieve the letters of the current user from the database
+    letters = await session.execute(select(Letter).where(Letter.user_id == user_id))
+    letters = letters.scalars().all()
+    
+    # Convert the letter objects to dictionaries
+    letters_dicts = []
+    for letter in letters:
+        letter_dict = {
+            "id": letter.id,
+            "a_prenom": letter.a_prenom,
+            "a_nom": letter.a_nom,
+            "a_email": letter.a_email,
+            "a_ville": letter.a_ville,
+            "a_adresse": letter.a_adresse,
+            "a_Code_postal": letter.a_Code_postal,
+            "a_tele": letter.a_tele,
+            "b_prenom": letter.b_prenom,
+            "b_nom": letter.b_nom,
+            "b_entreprise": letter.b_entreprise,
+            "b_ville": letter.b_ville,
+            "b_adresse": letter.b_adresse,
+            "b_Code_postal": letter.b_Code_postal,
+            "objet": letter.objet,
+            "date": letter.date,
+            "lieu": letter.lieu,
+            "lettre_de_motivation": letter.lettre_de_motivation,
+            "signature": letter.signature,
+            "is_active": letter.is_active,
+            "user_id": letter.user_id
+        }
+        letters_dicts.append(letter_dict)
+
+    # Return the letter data
+    return letters_dicts
+
+
+########################## GOOGLE AUTHENTICATION ###########################
+
+
+
+CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
+oauth.register(
+    name='google',
+    server_metadata_url=CONF_URL,
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
+
+
+@app.get('/')
+async def homepage(request: Request):
+    user = request.session.get('user')
+    if user:
+        return JSONResponse(content=user)
+    return JSONResponse(content={'message': 'Not logged in'})
+
+@app.get('/google/login')
+async def login(request: Request):
+    redirect_uri = "http://127.0.0.1:8000/auth"
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+@app.get('/auth')
+async def auth(request: Request, session: AsyncSession = Depends(get_session)):
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except OAuthError as error:
+        return JSONResponse(content={'error': error.error})
+    
+    user_info = token.get('userinfo')
+    if user_info:
+        email = user_info.get('email')
+        # Check if the user already exists in the database
+        stmt = select(User).where(User.email == email)
+        result = await session.execute(stmt)
+        user = result.scalar()
+
+        if user:
+            # User already exists, log them in
+            request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'picture': user.avatar}
+            return JSONResponse(content=user_info)
+        else:
+            # User does not exist, create a new user and save their information
+            user = User(fullname=user_info.get('fullname'), email=email, avatar=user_info.get('avatar'))
+            session.add(user)
+            await session.commit()
+            
+            request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'avatar': user.avatar}
+            return JSONResponse(content=user_info)
+
+    return JSONResponse(content={'message': 'User information not available'}) 
+
+
+
+@app.get('/google/logout')
+async def logout(request: Request):
+    request.session.pop('user', None)
+    return JSONResponse(content={'message': 'Logged out'})
+
+
 
 
 
