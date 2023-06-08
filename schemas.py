@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,Field
 
 class CreateCvRequest(BaseModel):
     nom: str
@@ -24,7 +24,7 @@ class CreateCvRequest(BaseModel):
     is_languages : bool
     is_skills : bool
     is_loisirs : bool
-    is_active: bool
+    is_active: bool = Field(None,description='optionl')
     class Config:
         orm_mode = True
 
@@ -81,7 +81,7 @@ class UpdateCvRequest(BaseModel):
     is_languages : bool
     is_skills : bool
     is_loisirs : bool
-    is_active: bool
+    is_active: bool = Field(None,description='optionl')
     
 
 
