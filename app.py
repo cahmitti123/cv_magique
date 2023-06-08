@@ -7,6 +7,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import List
 from passlib.context import CryptContext
 import os
+import boto3
+from botocore.exceptions import NoCredentialsError
 from fastapi import UploadFile,File
 import jwt, json
 from json.decoder import JSONDecodeError
@@ -48,6 +50,12 @@ DB_PORT = os.environ.get('DB_PORT')
 DB_USER = os.environ.get('DB_USER')
 DB_PASS = os.environ.get('DB_PASS')
 DB_BASE = os.environ.get('DB_BASE')
+
+
+DIGITALOCEAN_SPACES_ACCESS_KEY = os.environ.get('DIGITALOCEAN_SPACES_ACCESS_KEY')
+DIGITALOCEAN_SPACES_SECRET_KEY = os.environ.get('DIGITALOCEAN_SPACES_SECRET_KEY')
+DIGITALOCEAN_SPACES_ENDPOINT_URL = os.environ.get('DIGITALOCEAN_SPACES_ENDPOINT_URL')
+DIGITALOCEAN_SPACES_NAME = os.environ.get('DIGITALOCEAN_SPACES_NAME')
 
 DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_BASE}"
 #DATABASE_URL = f"mysql+aiomysql://root@localhost:3306/cv_magique"
@@ -240,6 +248,8 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
     # Return the CV data
     return cvs_dicts
 
+################### Images Handling #######################
+
 # import cv image
 @app.post("/me/cvs/{cv_id}/image")
 async def import_cv_image(
@@ -253,10 +263,23 @@ async def import_cv_image(
     payload = decode_access_token(token)
     user_id = payload["user_id"]
 
-    # Save the uploaded image
-    image_path = f"cv_images/{cv_id}_{image.filename}"
-    with open(image_path, "wb") as f:
-        f.write(await image.read())
+    # Save the uploaded image to DigitalOcean Spaces
+    image_path = f"cvmagic/{cv_id}_{image.filename}"
+    try:
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=DIGITALOCEAN_SPACES_ENDPOINT_URL,
+            aws_access_key_id=DIGITALOCEAN_SPACES_ACCESS_KEY,
+            aws_secret_access_key=DIGITALOCEAN_SPACES_SECRET_KEY
+        )
+        s3.upload_fileobj(
+            image.file,
+            DIGITALOCEAN_SPACES_NAME,
+            image_path,
+            ExtraArgs={"ACL": "public-read"}
+        )
+    except NoCredentialsError:
+        raise HTTPException(status_code=500, detail="Failed to connect to DigitalOcean Spaces")
 
     # Update the CV's image URL in the database
     cv = await session.execute(select(Cv).where(Cv.id == cv_id and Cv.user_id == user_id))
@@ -264,11 +287,43 @@ async def import_cv_image(
     if not cv:
         raise HTTPException(status_code=404, detail="CV not found")
 
-    cv.img_url = image_path
+    cv.img_url = f"{DIGITALOCEAN_SPACES_ENDPOINT_URL}/{DIGITALOCEAN_SPACES_NAME}/{image_path}"
     await session.commit()
 
     # Return a success message
     return {"message": "CV image imported successfully"}
+
+# Get cv image
+@app.get("/me/cvs/{cv_id}/image")
+async def get_cv_image(
+    cv_id: str,
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    # Retrieve the CV from the database
+    cv = await session.execute(select(Cv).where(Cv.id == cv_id and Cv.user_id == user_id))
+    cv = cv.scalar()
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    # Return the CV image URL
+    return {"image_url": cv.img_url}
+
+
+
+
+
+
+
+
+
+
+
 
 
 #generate random id
@@ -478,7 +533,7 @@ async def update_user_as_admin(
     admin_user = admin_user.scalar_one_or_none()
     if not admin_user:
         raise HTTPException(status_code=404, detail="Admin user not found")
-
+     
     # Check if the admin user is an admin
     if not admin_user.is_admin:
         raise HTTPException(status_code=403, detail="Unauthorized access")
