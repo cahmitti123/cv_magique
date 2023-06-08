@@ -32,6 +32,7 @@ class Cv(Base):
     is_languages = Column(Boolean, default=True)
     is_skills = Column(Boolean, default=True)
     is_loisirs = Column(Boolean, default=True)
+    is_active = Column(Boolean,default=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
     user = relationship("User", back_populates="cvs")
 

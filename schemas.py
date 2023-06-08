@@ -14,7 +14,7 @@ class CreateCvRequest(BaseModel):
     style:str
     color:str
     description:str
-    experiences: str
+    experiences: str                                                 
     education: str
     languages: str
     skills: str 
@@ -24,6 +24,7 @@ class CreateCvRequest(BaseModel):
     is_languages : bool
     is_skills : bool
     is_loisirs : bool
+    is_active: bool
     class Config:
         orm_mode = True
 
@@ -52,6 +53,7 @@ class CvResponse(BaseModel):
     is_languages : bool
     is_skills : bool
     is_loisirs : bool
+    is_active : bool
     
     
 
@@ -79,6 +81,7 @@ class UpdateCvRequest(BaseModel):
     is_languages : bool
     is_skills : bool
     is_loisirs : bool
+    is_active: bool
     
 
 
@@ -127,6 +130,7 @@ class CreateLetterRequest(BaseModel):
     lieu: str
     lettre_de_motivation: str
     signature: str
+    is_active: bool
     class Config:
         orm_mode = True
 
@@ -149,3 +153,4 @@ class UpdateLetterRequest(BaseModel):
     lieu: str = None
     lettre_de_motivation: str = None
     signature: str = None
+    is_active:bool

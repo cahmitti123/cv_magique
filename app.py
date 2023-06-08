@@ -230,6 +230,7 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
             "is_education":cv.is_education,
             "is_skills":cv.is_skills,
             "is_loisirs":cv.is_loisirs,
+            "is_active":cv.is_active,
             "user_id": cv.user_id
         }
        
@@ -239,20 +240,37 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
     # Return the CV data
     return cvs_dicts
 
+# import cv image
 @app.post("/me/cvs/{cv_id}/image")
-async def import_cv_image(cv_id: int, image: UploadFile = File(...), session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def import_cv_image(
+    cv_id: str,
+    image: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
     # Save the uploaded image
     image_path = f"cv_images/{cv_id}_{image.filename}"
     with open(image_path, "wb") as f:
         f.write(await image.read())
 
     # Update the CV's image URL in the database
-    cv = await session.execute(select(Cv).where(Cv.id == cv_id)).scalar()
+    cv = await session.execute(select(Cv).where(Cv.id == cv_id and Cv.user_id == user_id))
+    cv = cv.scalar()
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
     cv.img_url = image_path
     await session.commit()
 
     # Return a success message
     return {"message": "CV image imported successfully"}
+
+
 #generate random id
 def generate_random_id(length=10):
     import string
@@ -333,6 +351,7 @@ async def duplicate_cv(cv_id: str, session: AsyncSession = Depends(get_session),
         is_languages=cv.is_languages,
         is_skills=cv.is_skills,
         is_loisirs=cv.is_loisirs,
+        is_active = cv.is_active,
         user_id=user_id
     )
 
@@ -568,6 +587,7 @@ async def get_all_cvs(
             "is_languages": cv.is_languages,
             "is_skills":cv.is_skills,
             "is_loisirs": cv.is_loisirs,
+            "is_active":cv.is_active,
             "user_id": cv.user_id
         }
         cv_dict['experiences'] = json.loads(cv_dict['experiences'])
@@ -779,7 +799,7 @@ oauth.register(
 
 @app.get('/google/login')
 async def login(request: Request):
-    redirect_uri = "http://127.0.0.1:8000/auth"
+    redirect_uri = "https://oyster-app-7rf7n.ondigitalocean.app/auth"
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @app.get('/auth')
