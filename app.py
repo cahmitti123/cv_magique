@@ -8,6 +8,7 @@ from typing import List
 from passlib.context import CryptContext
 import os
 import boto3
+import urllib.parse
 from botocore.exceptions import NoCredentialsError
 from fastapi import UploadFile,File
 import jwt, json
@@ -24,7 +25,7 @@ from models import Base
 from starlette.config import Config
 from starlette.requests import Request
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse,RedirectResponse
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from dotenv import load_dotenv
 
@@ -398,9 +399,6 @@ async def delete_cv_image(
 
     # Return a success message
     return {"message": "CV image deleted successfully"}
-
-
-
 
 
 
@@ -943,7 +941,7 @@ oauth.register(
 async def login(request: Request):
     redirect_uri = "https://oyster-app-7rf7n.ondigitalocean.app/auth"
     return await oauth.google.authorize_redirect(request, redirect_uri)
-
+'''
 @app.get('/auth')
 async def auth(request: Request, session: AsyncSession = Depends(get_session)):
     try:
@@ -974,16 +972,59 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
 
     return JSONResponse(content={'message': 'User information not available'}) 
 
+'''
+@app.get('/auth')
+async def auth(request: Request, session: AsyncSession = Depends(get_session)):
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except OAuthError as error:
+        return JSONResponse(content={'error': error.error})
+    
+    user_info = token.get('userinfo')
+    if user_info:
+        email = user_info.get('email')
+        # Check if the user already exists in the database
+        stmt = select(User).where(User.email == email)
+        result = await session.execute(stmt)
+        user = result.scalar()
+
+        if user:
+            # User already exists, log them in
+            request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'picture': user.avatar}
+        else:
+            # User does not exist, create a new user and save their information
+            user = User(fullname=user_info.get('fullname'), email=email, avatar=user_info.get('avatar'))
+            session.add(user)
+            await session.commit()
+            
+            request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'avatar': user.avatar}
+
+        # Prepare the data to be passed as URL parameters
+        user_data = {
+            'id': user.id,
+            'fullname': user.fullname,
+            'email': user.email,
+            'avatar': user.avatar
+        }
+
+        # Encode the data and include it in the redirect URL
+        redirect_url = "http://localhost:3000/?data=" + urllib.parse.quote(json.dumps(user_data))
+
+        return RedirectResponse(url=redirect_url)
+
+    return JSONResponse(content={'message': 'User information not available'})
+
+
+
+
+
+
 
 
 @app.get('/google/logout')
 async def logout(request: Request):
     request.session.pop('user', None)
     return JSONResponse(content={'message': 'Logged out'})
-
-
-
-
 
 
 if __name__ == "__main__":
