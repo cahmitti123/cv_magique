@@ -251,6 +251,8 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
 ################### Images Handling #######################
 
 # import cv image
+MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024  # 4 megabytes
+
 @app.post("/me/cvs/{cv_id}/image")
 async def import_cv_image(
     cv_id: str,
@@ -262,6 +264,10 @@ async def import_cv_image(
     token = credentials.credentials
     payload = decode_access_token(token)
     user_id = payload["user_id"]
+
+    # Check the image size
+    if image.filesize > MAX_IMAGE_SIZE_BYTES:
+        raise HTTPException(status_code=400, detail="Image size exceeds the allowed limit")
 
     # Save the uploaded image to DigitalOcean Spaces
     image_path = f"cvmagic/{cv_id}_{image.filename}"
@@ -292,6 +298,7 @@ async def import_cv_image(
 
     # Return a success message
     return {"message": "CV image imported successfully"}
+
 
 # Get cv image
 @app.get("/me/cvs/{cv_id}/image")
