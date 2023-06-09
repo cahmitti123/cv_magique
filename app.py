@@ -314,7 +314,90 @@ async def get_cv_image(
     # Return the CV image URL
     return {"image_url": cv.img_url}
 
+#update cv image
+@app.put("/me/cvs/{cv_id}/image")
+async def update_cv_image(
+    cv_id: str,
+    image: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
 
+    # Retrieve the CV from the database
+    cv = await session.execute(select(Cv).where(Cv.id == cv_id and Cv.user_id == user_id))
+    cv = cv.scalar()
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    # Save the uploaded image to DigitalOcean Spaces
+    image_path = f"cvmagic/{cv_id}_{image.filename}"
+    try:
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=DIGITALOCEAN_SPACES_ENDPOINT_URL,
+            aws_access_key_id=DIGITALOCEAN_SPACES_ACCESS_KEY,
+            aws_secret_access_key=DIGITALOCEAN_SPACES_SECRET_KEY
+        )
+        s3.upload_fileobj(
+            image.file,
+            DIGITALOCEAN_SPACES_NAME,
+            image_path,
+            ExtraArgs={"ACL": "public-read"}
+        )
+    except NoCredentialsError:
+        raise HTTPException(status_code=500, detail="Failed to connect to DigitalOcean Spaces")
+
+    # Update the CV's image URL in the database
+    cv.img_url = f"{DIGITALOCEAN_SPACES_ENDPOINT_URL}/{DIGITALOCEAN_SPACES_NAME}/{image_path}"
+    await session.commit()
+
+    # Return a success message
+    return {"message": "CV image updated successfully"}
+
+
+
+
+# delete cv image
+@app.delete("/me/cvs/{cv_id}/image")
+async def delete_cv_image(
+    cv_id: str,
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    # Retrieve the CV from the database
+    cv = await session.execute(select(Cv).where(Cv.id == cv_id and Cv.user_id == user_id))
+    cv = cv.scalar()
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    # Delete the CV image from DigitalOcean Spaces
+    image_path = cv.img_url.replace(f"{DIGITALOCEAN_SPACES_ENDPOINT_URL}/{DIGITALOCEAN_SPACES_NAME}/", "")
+    try:
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=DIGITALOCEAN_SPACES_ENDPOINT_URL,
+            aws_access_key_id=DIGITALOCEAN_SPACES_ACCESS_KEY,
+            aws_secret_access_key=DIGITALOCEAN_SPACES_SECRET_KEY
+        )
+        s3.delete_object(Bucket=DIGITALOCEAN_SPACES_NAME, Key=image_path)
+    except NoCredentialsError:
+        raise HTTPException(status_code=500, detail="Failed to connect to DigitalOcean Spaces")
+
+    # Clear the CV's image URL in the database
+    cv.img_url = None
+    await session.commit()
+
+    # Return a success message
+    return {"message": "CV image deleted successfully"}
 
 
 
