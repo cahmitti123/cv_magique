@@ -15,7 +15,7 @@ import jwt, json
 from json.decoder import JSONDecodeError
 from datetime import datetime, timedelta
 from models import User
-from schemas import CreateCvRequest,CreateUserRequest,UserLoginRequest,UpdateCvRequest,UpdateUserRequest,UserResponse,CreateLetterRequest,UpdateLetterRequest
+from schemas import CreateCvRequest,CreateUserRequest,UserLoginRequest,UpdateCvRequest,UpdateUserRequest,UserResponse,CreateLetterRequest,UpdateLetterRequest,UpdateCurrentUser
 import json
 import uvicorn
 import random
@@ -167,7 +167,7 @@ async def login_user(request: UserLoginRequest, session: AsyncSession = Depends(
     # Return the access token
     return {"access_token": access_token, "token_type": "bearer"}
 
-
+#Get Current User
 @app.get("/me")
 async def get_current_user(session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Decode the access token
@@ -191,6 +191,35 @@ async def get_current_user(session: AsyncSession = Depends(get_session), credent
 
     # Return the user data
     return user_dict
+
+#update current user
+@app.put("/me")
+async def update_current_user(user_update: UpdateCurrentUser, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    # Retrieve the current user from the database
+    user = await session.execute(select(User).where(User.id == user_id))
+    user = user.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Update user information
+    user.fullname = user_update.fullname
+    user.is_active = user_update.is_active
+    user.hashed_password = hash_password(user_update.hashed_password)
+    
+    # Commit the changes to the database
+    await session.commit()
+
+    # Return the updated user data
+    
+    return {"msg":"your profile information updated successfully"}
+
+
+
 
 # this function is to parse data in json if it's in valid format and to keep as it is if it's string
 def try_json_loads(value):

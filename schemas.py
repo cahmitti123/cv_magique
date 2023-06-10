@@ -98,6 +98,12 @@ class UpdateUserRequest(BaseModel):
     avatar: str = None
     is_admin: bool = None
     is_active:bool = None
+    hashed_password: str = None
+
+class UpdateCurrentUser(BaseModel):
+    fullname: str = None
+    is_active:bool = None
+    hashed_password: str = None
 
 class UserResponse(BaseModel):
     fullname: str
