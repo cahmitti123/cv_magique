@@ -7,8 +7,9 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import List
 from passlib.context import CryptContext
 import os
+import requests
 import boto3
-import shutil
+from starlette.responses import FileResponse
 import urllib.parse
 from botocore.exceptions import NoCredentialsError
 from fastapi import UploadFile,File
@@ -431,10 +432,36 @@ async def delete_cv_image(
     return {"message": "CV image deleted successfully"}
 
 #download the image 
+@app.get("/me/cvs/{cv_id}/image")
+async def download_cv_image(
+    cv_id: str,
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
 
+    # Retrieve the CV from the database
+    cv = await session.execute(select(Cv).where(Cv.id == cv_id and Cv.user_id == user_id))
+    cv = cv.scalar()
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
 
+    # Download the image
+    image_url = cv.img_url
+    response = requests.get(image_url)
+    if response.status_code != 200:
+        raise HTTPException(status_code=500, detail="Failed to download image")
 
+    # Save the image to a file
+    image_filename = f"cv_{cv_id}.jpg"  # You can choose a suitable filename here
+    with open(image_filename, "wb") as f:
+        f.write(response.content)
 
+    # Return the downloaded image filename
+    return {"image_filename": image_filename}
 
 
 
@@ -1037,13 +1064,13 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
             # Return token
             access_token = create_access_token(user.id)
             
-            return {"access_token": access_token, "token_type": "bearer"}, RedirectResponse(url=redirect_url)
+            return {"access_token": access_token, "token_type": "bearer"},  RedirectResponse(url=redirect_url)
 
             # Encode the data and include it in the redirect URL
             
 
     return JSONResponse(content={'message': 'User information not available'})
-
+         
 
 
 
