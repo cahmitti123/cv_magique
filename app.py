@@ -1024,7 +1024,7 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
             return {"access_token": access_token, "token_type": "bearer"}
         else:
             # User does not exist, create a new user and save their information
-            user = User(fullname=user_info.get('fullname'), email=email, avatar=user_info.get('avatar'))
+            user = User(fullname=user_info.get('name'), email=email, avatar=user_info.get('picture'))
             session.add(user)
             await session.commit()
             
