@@ -8,6 +8,7 @@ from typing import List
 from passlib.context import CryptContext
 import os
 import boto3
+import shutil
 import urllib.parse
 from botocore.exceptions import NoCredentialsError
 from fastapi import UploadFile,File
@@ -429,6 +430,7 @@ async def delete_cv_image(
     # Return a success message
     return {"message": "CV image deleted successfully"}
 
+#download the image 
 
 
 
@@ -1033,11 +1035,13 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
             # Return token
             access_token = create_access_token(user.id)
             return {"access_token": access_token, "token_type": "bearer"}
+            # Encode the data and include it in the redirect URL
+    redirect_url = "http://localhost:3000/app"
+
+    return RedirectResponse(url=redirect_url)
 
 
     return JSONResponse(content={'message': 'User information not available'})
-
-
 
 
 
@@ -1050,3 +1054,7 @@ async def logout(request: Request):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)
+
+        
+
+   
