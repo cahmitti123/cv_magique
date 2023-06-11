@@ -1003,11 +1003,7 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
 
 '''
 @app.get('/auth')
-async def auth(request: Request, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
-    if credentials:
-        # User is already logged in, redirect to the '/me' route
-        return RedirectResponse(url="/me")
-
+async def auth(request: Request, session: AsyncSession = Depends(get_session)):
     try:
         token = await oauth.google.authorize_access_token(request)
     except OAuthError as error:
@@ -1040,20 +1036,12 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session), c
             'avatar': user.avatar
         }
 
-        # Generate the access token
-        access_token = create_access_token(user.id)
-
-        # Encode the user data and access token
-        encoded_user_data = urllib.parse.quote(json.dumps(user_data))
-        encoded_access_token = urllib.parse.quote(access_token)
-
-        # Include the encoded user data and access token in the redirect URL
-        redirect_url = f"http://localhost:3000/me?data={encoded_user_data}&access_token={encoded_access_token}"
+        # Encode the data and include it in the redirect URL
+        redirect_url = "http://localhost:3000/?data=" + urllib.parse.quote(json.dumps(user_data))
 
         return RedirectResponse(url=redirect_url)
 
     return JSONResponse(content={'message': 'User information not available'})
-
 
 '''
 @app.get('/auth')
