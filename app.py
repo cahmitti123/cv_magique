@@ -1013,6 +1013,7 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
     user_info = token.get('userinfo')
     if user_info:
         email = user_info.get('email')
+        redirect_url = "http://localhost:3000/app"
         # Check if the user already exists in the database
         stmt = select(User).where(User.email == email)
         result = await session.execute(stmt)
@@ -1023,7 +1024,8 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
             request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'picture': user.avatar}
             # Generate the access token
             access_token = create_access_token(user.id)
-            return {"access_token": access_token, "token_type": "bearer"}
+            return {"access_token": access_token, "token_type": "bearer"}, RedirectResponse(url=redirect_url)
+
         else:
             # User does not exist, create a new user and save their information
             user = User(fullname=user_info.get('name'), email=email, avatar=user_info.get('picture'))
@@ -1034,12 +1036,11 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
 
             # Return token
             access_token = create_access_token(user.id)
-            return {"access_token": access_token, "token_type": "bearer"}
+            
+            return {"access_token": access_token, "token_type": "bearer"}, RedirectResponse(url=redirect_url)
+
             # Encode the data and include it in the redirect URL
-    redirect_url = "http://localhost:3000/app"
-
-    return RedirectResponse(url=redirect_url)
-
+            
 
     return JSONResponse(content={'message': 'User information not available'})
 
