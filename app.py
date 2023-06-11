@@ -1000,7 +1000,6 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
             return JSONResponse(content={'token':token})
 
     return JSONResponse(content={'message': 'User information not available'}) 
-
 '''
 @app.get('/auth')
 async def auth(request: Request, session: AsyncSession = Depends(get_session)):
@@ -1020,6 +1019,9 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
         if user:
             # User already exists, log them in
             request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'picture': user.avatar}
+            # Generate the access token
+            access_token = create_access_token(user.id)
+            return {"access_token": access_token, "token_type": "bearer"}
         else:
             # User does not exist, create a new user and save their information
             user = User(fullname=user_info.get('fullname'), email=email, avatar=user_info.get('avatar'))
@@ -1028,67 +1030,12 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
             
             request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'avatar': user.avatar}
 
-        # Prepare the data to be passed as URL parameters
-        user_data = {
-            'id': user.id,
-            'fullname': user.fullname,
-            'email': user.email,
-            'avatar': user.avatar
-        }
+            # Return token
+            access_token = create_access_token(user.id)
+            return {"access_token": access_token, "token_type": "bearer"}
 
-        # Encode the data and include it in the redirect URL
-        redirect_url = "http://localhost:3000/?data=" + urllib.parse.quote(json.dumps(user_data))
-
-        return RedirectResponse(url=redirect_url)
 
     return JSONResponse(content={'message': 'User information not available'})
-
-'''
-@app.get('/auth')
-async def auth(request: Request, session: AsyncSession = Depends(get_session)):
-    try:
-        # Decode the access token
-        token = await oauth.google.authorize_access_token(request)
-        payload = decode_access_token(token)
-        user_id = payload["user_id"]
-    except OAuthError as error:
-        return JSONResponse(content={'error': error.error})
-
-    user_info = token.get('userinfo')
-    if user_info:
-        email = user_info.get('email')
-        # Check if the user already exists in the database
-        stmt = select(User).where(User.email == email)
-        result = await session.execute(stmt)
-        user = result.scalar()
-
-        if user:
-            # User already exists, log them in
-            request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'picture': user.avatar}
-        else:
-            # User does not exist, create a new user and save their information
-            user = User(fullname=user_info.get('fullname'), email=email, avatar=user_info.get('avatar'))
-            session.add(user)
-            await session.commit()
-
-            request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'avatar': user.avatar}
-
-        # Prepare the data to be passed as URL parameters
-        user_data = {
-            'id': user.id,
-            'fullname': user.fullname,
-            'email': user.email,
-            'avatar': user.avatar
-        }
-
-        # Encode the data and include it in the redirect URL
-        redirect_url = "http://localhost:3000/?data=" + urllib.parse.quote(json.dumps(user_data))
-
-        return RedirectResponse(url=redirect_url)
-
-    return JSONResponse(content={'message': 'User information not available'})
-
-'''
 
 
 
