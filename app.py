@@ -1052,7 +1052,7 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
             # Generate the access token
             access_token = create_access_token(user.id)
             redirect_url_with_token = redirect_url + "?access_token=" + access_token
-            return RedirectResponse(url=redirect_url_with_token)
+            return RedirectResponse(url=f'http://localhost:3000/app?access_token={access_token}')
 
         else:
             # User does not exist, create a new user and save their information
@@ -1065,7 +1065,7 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
             # Return token
             access_token = create_access_token(user.id)
             redirect_url_with_token = redirect_url + "?access_token=" + access_token
-            return RedirectResponse(url=redirect_url_with_token)
+            return RedirectResponse(url=f'http://localhost:3000/app?access_token={access_token}')
 
             # Encode the data and include it in the redirect URL
             
