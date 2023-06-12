@@ -1051,7 +1051,8 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
             request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'picture': user.avatar}
             # Generate the access token
             access_token = create_access_token(user.id)
-            return {"access_token": access_token, "token_type": "bearer"}, RedirectResponse(url=redirect_url)
+            redirect_url_with_token = redirect_url + "?access_token=" + access_token
+            return RedirectResponse(url=redirect_url_with_token)
 
         else:
             # User does not exist, create a new user and save their information
@@ -1063,8 +1064,8 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
 
             # Return token
             access_token = create_access_token(user.id)
-            
-            return {"access_token": access_token, "token_type": "bearer"},  RedirectResponse(url=redirect_url)
+            redirect_url_with_token = redirect_url + "?access_token=" + access_token
+            return RedirectResponse(url=redirect_url_with_token)
 
             # Encode the data and include it in the redirect URL
             
