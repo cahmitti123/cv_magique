@@ -999,37 +999,9 @@ oauth.register(
 async def login(request: Request):
     redirect_uri = "https://oyster-app-7rf7n.ondigitalocean.app/auth"
     return await oauth.google.authorize_redirect(request, redirect_uri)
-'''
-@app.get('/auth')
-async def auth(request: Request, session: AsyncSession = Depends(get_session)):
-    try:
-        token = await oauth.google.authorize_access_token(request)
-    except OAuthError as error:
-        return JSONResponse(content={'error': error.error})
-    
-    user_info = token.get('userinfo')
-    if user_info:
-        email = user_info.get('email')
-        # Check if the user already exists in the database
-        stmt = select(User).where(User.email == email)
-        result = await session.execute(stmt)
-        user = result.scalar()
 
-        if user:
-            # User already exists, log them in
-            request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'picture': user.avatar}
-            return JSONResponse(content=user_info)
-        else:
-            # User does not exist, create a new user and save their information
-            user = User(fullname=user_info.get('fullname'), email=email, avatar=user_info.get('avatar'))
-            session.add(user)
-            await session.commit()
-            
-            request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'avatar': user.avatar}
-            return JSONResponse(content={'token':token})
 
-    return JSONResponse(content={'message': 'User information not available'}) 
-'''
+
 @app.get('/auth')
 async def auth(request: Request, session: AsyncSession = Depends(get_session)):
     try:
