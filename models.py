@@ -65,7 +65,7 @@ class Letter(Base):
     b_prenom= Column(String(256))
     b_nom= Column(String(256))
     b_entreprise= Column(String(256))
-    b_ville= Column(String(256))
+    b_ville= Column(String(256))      
     b_adresse= Column(String(256))
     b_Code_postal= Column(String(256))
     objet= Column(String(256))
@@ -78,3 +78,10 @@ class Letter(Base):
     is_active= Column(Boolean, default=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
     user = relationship("User", back_populates="letters")
+
+
+
+class Job(Base):
+    __tablename__ = "jobs"
+    id = Column(String(50), primary_key=True, index=True)
+    lettre_de_motivation = Column(Text(600))   

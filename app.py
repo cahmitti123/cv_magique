@@ -29,6 +29,7 @@ from starlette.requests import Request
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import JSONResponse,RedirectResponse
 from authlib.integrations.starlette_client import OAuth, OAuthError
+from letter_generator import generate_cover_letter
 from dotenv import load_dotenv
 
 import os
@@ -861,8 +862,8 @@ async def duplicate_letter(letter_id: str, session: AsyncSession = Depends(get_s
         objet=letter.objet,
         date=letter.date,
         lieu=letter.lieu,
-        style = letter.style,
-        color = letter.color,
+        style=letter.style,
+        color=letter.color,
         lettre_de_motivation=letter.lettre_de_motivation,
         signature=letter.signature,
         is_active=letter.is_active,
@@ -1037,7 +1038,7 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
             access_token = create_access_token(user.id)
             return RedirectResponse(url=f'https://cvmagique.vercel.app/login?access_token={access_token}')
 
-            # Encode the data and include it in the redirect URL
+           
             
 
     return JSONResponse(content={'message': 'User information not available'})
@@ -1049,6 +1050,22 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
 async def logout(request: Request):
     request.session.pop('user', None)
     return JSONResponse(content={'message': 'Logged out'})
+
+
+############### Lettre generator with chatgpt ##############
+@app.post("/generate_cover_letter/{company_name}/{subject}/{skills}/{nb_experience}/{activite}/{poste}")
+async def generate_cover_letter_route(
+    company_name: str,
+    subject: str,
+    skills:str,
+    nb_experience:int, 
+    activite: str,
+    poste: str,
+    
+    ):
+    
+    return generate_cover_letter(company_name, subject,nb_experience,activite,poste,skills)
+
 
 
 if __name__ == "__main__":
