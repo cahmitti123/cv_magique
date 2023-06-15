@@ -81,7 +81,3 @@ class Letter(Base):
 
 
 
-class Job(Base):
-    __tablename__ = "jobs"
-    id = Column(String(50), primary_key=True, index=True)
-    lettre_de_motivation = Column(Text(600))   

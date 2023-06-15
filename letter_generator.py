@@ -45,5 +45,6 @@ def generate_cover_letter(company_name: str, subject: str,nb_experience: int,act
     return {"description": description}
 
 
-    
-   
+
+
+

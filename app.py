@@ -431,7 +431,7 @@ async def delete_cv_image(
 
     # Return a success message
     return {"message": "CV image deleted successfully"}
-
+''''
 #download the image 
 @app.get("/me/cvs/{cv_id}/image")
 async def download_cv_image(
@@ -464,7 +464,7 @@ async def download_cv_image(
     # Return the downloaded image filename
     return {"image_filename": image_filename}
 
-
+'''
 
 #generate random id
 def generate_random_id(length=10):
@@ -532,7 +532,7 @@ async def duplicate_cv(cv_id: str, session: AsyncSession = Depends(get_session),
         postalcode=cv.postalcode,
         tele=cv.tele,
         brief=cv.brief,
-        img_url=cv.img_url,
+        img_url="",
         style=cv.style,
         color=cv.color,
         description=cv.description,
