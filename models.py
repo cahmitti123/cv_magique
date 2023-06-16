@@ -45,6 +45,7 @@ class User(Base):
     avatar = Column(String(100))
     hashed_password = Column(String(100))
     is_admin = Column(Boolean, default=False)
+    is_tutorial = Column(Boolean, default=True)
     is_active = Column(Boolean, default=True)
     cvs = relationship("Cv", back_populates="user", cascade="all, delete")
     letters = relationship("Letter", back_populates="user", cascade="all, delete")

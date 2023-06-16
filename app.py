@@ -190,7 +190,8 @@ async def get_current_user(session: AsyncSession = Depends(get_session), credent
         "fullname": user.fullname,
         "email": user.email,
         "avatar": user.avatar,
-        "is_admin":user.is_admin
+        "is_admin":user.is_admin,
+        "is_tutorial":user.is_tutorial
     }
 
     # Return the user data

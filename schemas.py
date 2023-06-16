@@ -92,6 +92,7 @@ class CreateUserRequest(BaseModel):
     email: str
     avatar: str
     hashed_password: str
+    
 
 class UpdateUserRequest(BaseModel):
     fullname: str = None
@@ -112,6 +113,7 @@ class UserResponse(BaseModel):
     avatar: str
     is_admin:bool
     is_active:bool
+    is_tutorial:bool
 
 class UserLoginRequest(BaseModel):
     email: str
