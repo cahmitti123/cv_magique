@@ -1,24 +1,25 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class CreateCvRequest(BaseModel):
-    nom: str
-    prenom: str
-    address: str
-    email: str
-    city: str
-    country: str
-    postalcode: str
-    tele: str
-    brief: str
-    img_url: str
-    style:str
-    color:str
-    description:str
-    experiences: str                                                 
-    education: str
-    languages: str
-    skills: str 
-    loisirs: str
+    nom: Optional[str] 
+    prenom: Optional[str] 
+    address: Optional[str] 
+    email: Optional[str] 
+    city: Optional[str] 
+    country: Optional[str] 
+    postalcode: Optional[str] 
+    tele: Optional[str] 
+    brief: Optional[str] 
+    img_url: Optional[str] 
+    style: Optional[str] 
+    color:Optional[str] 
+    description:Optional[str] 
+    experiences: Optional[str]                                              
+    education: Optional[str] 
+    languages: Optional[str] 
+    skills: Optional[str] 
+    loisirs: Optional[str] 
     is_experiences : bool
     is_education : bool
     is_languages : bool
@@ -118,26 +119,26 @@ class UserLoginRequest(BaseModel):
 
 
 class CreateLetterRequest(BaseModel):
-    a_prenom: str
-    a_nom: str
-    a_email: str
-    a_ville: str
-    a_adresse: str
-    a_Code_postal: str
-    a_tele: str
-    b_prenom: str
-    b_nom: str
-    b_entreprise: str
-    b_ville: str
-    b_adresse: str
-    b_Code_postal: str
-    objet: str
-    date: str
-    lieu: str
-    style:str
-    color:str
-    lettre_de_motivation: str
-    signature: str
+    a_prenom: Optional[str] 
+    a_nom: Optional[str] 
+    a_email: Optional[str] 
+    a_ville: Optional[str] 
+    a_adresse: Optional[str] 
+    a_Code_postal: Optional[str] 
+    a_tele: Optional[str] 
+    b_prenom: Optional[str] 
+    b_nom: Optional[str] 
+    b_entreprise: Optional[str] 
+    b_ville: Optional[str] 
+    b_adresse: Optional[str] 
+    b_Code_postal: Optional[str] 
+    objet: Optional[str] 
+    date: Optional[str] 
+    lieu: Optional[str] 
+    style:Optional[str] 
+    color:Optional[str] 
+    lettre_de_motivation: Optional[str] 
+    signature: Optional[str] 
     is_active: bool
     class Config:
         orm_mode = True

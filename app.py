@@ -8,6 +8,7 @@ from typing import List
 from passlib.context import CryptContext
 import os
 import requests
+from fastapi.encoders import jsonable_encoder
 import boto3
 from starlette.responses import FileResponse
 import urllib.parse
@@ -979,10 +980,7 @@ async def get_current_user_letters(session: AsyncSession = Depends(get_session),
 
 @app.get('/')
 async def homepage(request: Request):
-    user = request.session.get('user')
-    if user:
-        return JSONResponse(content=user)
-    return JSONResponse(content={'message': 'Not logged in'})
+    return "cv magique API"
 
 
 CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
@@ -1013,7 +1011,6 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
     user_info = token.get('userinfo')
     if user_info:
         email = user_info.get('email')
-        redirect_url = "https://cvmagique.vercel.app/login"
         # Check if the user already exists in the database
         stmt = select(User).where(User.email == email)
         result = await session.execute(stmt)
@@ -1057,14 +1054,17 @@ async def logout(request: Request):
 async def generate_cover_letter_route(
     company_name: str,
     subject: str,
-    skills:str,
-    nb_experience:int, 
+    skills: str,
+    nb_experience: int,
     activite: str,
     poste: str,
-    
-    ):
-    
-    return generate_cover_letter(company_name, subject,nb_experience,activite,poste,skills)
+):
+    try:
+        result = await generate_cover_letter(company_name, subject, nb_experience, activite, poste, skills)
+        return JSONResponse(content=jsonable_encoder(result))
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
 
 

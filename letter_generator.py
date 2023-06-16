@@ -1,8 +1,9 @@
 from fastapi import HTTPException
+import asyncio
 import openai
 import os
 
-def generate_cover_letter(company_name: str, subject: str,nb_experience: int,activite: str, poste:str, skills:str):
+async def generate_cover_letter(company_name: str, subject: str, nb_experience: int, activite: str, poste: str, skills: str):
     cover_letter_prompt = f"""
     "Please ignore all previous instructions.
 
@@ -23,26 +24,30 @@ def generate_cover_letter(company_name: str, subject: str,nb_experience: int,act
      or after you stop writing and make sure to add the back to lines also. Just do it."
     """
     api_key = os.environ.get('OPENAI_API_KEY')  # Retrieve your API key from an environment variable
-    
-    cover_letter_response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=cover_letter_prompt,
-        max_tokens=500,  # Adjust the value as per your requirements
-        n=1,
-        stop=None,
-        temperature=0.7,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0,
-        api_key=api_key
-    )
+
+    def generate_cover_letter_async():
+        return openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=cover_letter_prompt,
+            max_tokens=500,  # Adjust the value as per your requirements
+            n=1,
+            stop=None,
+            temperature=0.7,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            api_key=api_key
+        )
+
+    cover_letter_response = await asyncio.to_thread(generate_cover_letter_async)
 
     if "choices" not in cover_letter_response or len(cover_letter_response.choices) == 0:
-        raise HTTPException(status_code=500, detail="Failed to generate cover letter description")
+        raise Exception("Failed to generate cover letter description")
 
     description = cover_letter_response.choices[0].text.strip()
 
     return {"description": description}
+
 
 
 
