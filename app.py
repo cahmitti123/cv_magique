@@ -150,8 +150,8 @@ async def register_user(request: CreateUserRequest, session: AsyncSession = Depe
     await session.commit()
 
     # Return the registered user
-    message = f"User with ID :{user.id} created successfully"
-    return {"user":user, "message":message}
+    message = f"User  created successfully"
+    return {"message":message}
 
 @app.post("/login")
 async def login_user(request: UserLoginRequest, session: AsyncSession = Depends(get_session)):
