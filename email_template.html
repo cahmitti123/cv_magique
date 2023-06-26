@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        /* CSS styles for the email */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h2 {
+            color: #333333;
+        }
+        p {
+            color: #666666;
+            line-height: 1.5;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo img {
+            max-width: 150px;
+        }
+        .reset-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 8px 15px;
+            background-color: #ffba4bda;
+            color: #fff;
+            font-weight: 500;
+            font-size: 15px;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .reset-button a {
+            color: #fff;
+            text-decoration: none;
+        }
+       
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="https://i.ibb.co/84mTK6P/logo.png"  alt="Cvmagique Logo">
+        </div>
+        <h2>Password Reset Request</h2>
+        <p>Dear {{fullname}},</p>
+        <p>You have requested to reset your password. Please click on the link below to proceed:</p>
+        <a style="color: #fff;" class="reset-button" href="{{reset_link}}">Reset Password</a>
+        <p>If you did not request this reset, please ignore this email.</p>
+        <p>Best regards,<br>Cvmagique Team</p>
+    </div>
+</body>
+</html>

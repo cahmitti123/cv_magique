@@ -19,9 +19,7 @@ async def generate_cover_letter(company_name: str, subject: str, nb_experience: 
      Domaine d'activité : {activite}
      competences: {skills}
      Poste souhaité : {poste}
-
-     Make this text less than 600 tokens, Please don´t explain anything of what your are going to do before
-     or after you stop writing and make sure to add the back to lines also. Just do it."
+     Please don´t explain anything of what your are going to do .Just do it."
     """
     api_key = os.environ.get('OPENAI_API_KEY')  # Retrieve your API key from an environment variable
 
@@ -47,6 +45,7 @@ async def generate_cover_letter(company_name: str, subject: str, nb_experience: 
     description = cover_letter_response.choices[0].text.strip()
 
     return {"description": description}
+
 
 
 

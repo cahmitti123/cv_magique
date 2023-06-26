@@ -1,4 +1,5 @@
 import asyncio
+import itsdangerous
 from sqlalchemy import  select
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -32,6 +33,10 @@ from starlette.responses import JSONResponse,RedirectResponse
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from letter_generator import generate_cover_letter
 from dotenv import load_dotenv
+from itsdangerous import URLSafeTimedSerializer
+from starlette.exceptions import HTTPException
+import smtplib
+from email.mime.text import MIMEText
 
 import os
 
@@ -55,6 +60,8 @@ DB_PORT = os.environ.get('DB_PORT')
 DB_USER = os.environ.get('DB_USER')
 DB_PASS = os.environ.get('DB_PASS')
 DB_BASE = os.environ.get('DB_BASE')
+
+EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
 
 
 DIGITALOCEAN_SPACES_ACCESS_KEY = os.environ.get('DIGITALOCEAN_SPACES_ACCESS_KEY')
@@ -1065,6 +1072,77 @@ async def generate_cover_letter_route(
         return JSONResponse(content=jsonable_encoder(result))
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+########### RESET PASSWORD FUNCTINOALITY ###############
+
+serializer = URLSafeTimedSerializer(SECRET_KEY)
+
+def send_email(email: str, subject: str, body: str):
+    sender = "abdessamad.e@lideo.co"
+    receiver = email
+    message = MIMEText(body, "html")
+    message["Subject"] = subject
+    message["From"] = sender
+    message["To"] = receiver
+
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        server.starttls()
+        server.login(sender, EMAIL_PASSWORD)
+        server.sendmail(sender, receiver, message.as_string())
+
+@app.post("/reset-password", status_code=200)
+async def reset_password(email: str,session: AsyncSession = Depends(get_session)):
+    # Check if the user exists in the database
+    user = await session.execute(select(User).where(User.email == email))
+    user = user.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Generate the password reset token
+    token = serializer.dumps(user.id)
+
+    # Create the reset link
+    reset_link = f"http://cvmagique.vercel.app/forgotpassword?token={token}"
+
+    # Create the email body
+    subject = "Password Reset"
+    # Read the email template file
+    with open('email_template.html', 'r') as file:
+        email_template = file.read()
+
+   # Replace placeholders in the email template with actual values
+    body = email_template.replace('{{fullname}}', user.fullname).replace('{{reset_link}}', reset_link)
+
+    # Send the reset link to the user's email
+    send_email(email, subject, body)
+
+    return {"message": "Password reset link has been sent to your email"}
+
+
+@app.put("/reset-password", status_code=200)
+async def update_password(reset_token: str, new_password: str,session: AsyncSession = Depends(get_session)):
+    try:
+        # Decrypt the reset token to get the user ID
+        user_id = serializer.loads(reset_token, max_age=3600)  # Token expires after 1 hour
+
+        # Retrieve the user from the database
+        user = await session.get(User, user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Update the user's password
+        user.hashed_password = hash_password(new_password)
+        await session.commit()
+
+        return {"message": "Password has been updated successfully"}
+    except itsdangerous.exc.SignatureExpired:
+        raise HTTPException(status_code=400, detail="Reset token has expired")
+    except itsdangerous.exc.BadSignature:
+        raise HTTPException(status_code=400, detail="Invalid reset token")
+
+
+
 
 
 

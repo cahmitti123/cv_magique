@@ -3,3 +3,4 @@ venv
 secret
 data.json
 test.py
+cv_images
