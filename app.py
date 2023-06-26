@@ -1104,7 +1104,7 @@ async def reset_password(email: str,session: AsyncSession = Depends(get_session)
     token = serializer.dumps(user.id)
 
     # Create the reset link
-    reset_link = f"http://cvmagique.vercel.app/forgotpassword?token={token}"
+    reset_link = f"http://cvmagique.vercel.app/updatepassword?token={token}"
 
     # Create the email body
     subject = "Password Reset"
