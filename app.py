@@ -61,7 +61,8 @@ DB_USER = os.environ.get('DB_USER')
 DB_PASS = os.environ.get('DB_PASS')
 DB_BASE = os.environ.get('DB_BASE')
 
-EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
+#EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
+EMAIL_PASSWORD = "Lideo@2023"
 
 
 DIGITALOCEAN_SPACES_ACCESS_KEY = os.environ.get('DIGITALOCEAN_SPACES_ACCESS_KEY')
