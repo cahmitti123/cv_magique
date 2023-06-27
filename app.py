@@ -441,40 +441,7 @@ async def delete_cv_image(
 
     # Return a success message
     return {"message": "CV image deleted successfully"}
-''''
-#download the image 
-@app.get("/me/cvs/{cv_id}/image")
-async def download_cv_image(
-    cv_id: str,
-    session: AsyncSession = Depends(get_session),
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-):
-    # Decode the access token
-    token = credentials.credentials
-    payload = decode_access_token(token)
-    user_id = payload["user_id"]
 
-    # Retrieve the CV from the database
-    cv = await session.execute(select(Cv).where(Cv.id == cv_id and Cv.user_id == user_id))
-    cv = cv.scalar()
-    if not cv:
-        raise HTTPException(status_code=404, detail="CV not found")
-
-    # Download the image
-    image_url = cv.img_url
-    response = requests.get(image_url)
-    if response.status_code != 200:
-        raise HTTPException(status_code=500, detail="Failed to download image")
-
-    # Save the image to a file
-    image_filename = f"cv_{cv_id}.jpg"  # You can choose a suitable filename here
-    with open(image_filename, "wb") as f:
-        f.write(response.content)
-
-    # Return the downloaded image filename
-    return {"image_filename": image_filename}
-
-'''
 
 #generate random id
 def generate_random_id(length=10):
@@ -1141,8 +1108,6 @@ async def update_password(reset_token: str, new_password: str,session: AsyncSess
         raise HTTPException(status_code=400, detail="Reset token has expired")
     except itsdangerous.exc.BadSignature:
         raise HTTPException(status_code=400, detail="Invalid reset token")
-
-
 
 
 

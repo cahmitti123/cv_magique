@@ -9,7 +9,7 @@ async def generate_cover_letter(company_name: str, subject: str, nb_experience: 
 
      Output langage: French
 
-     I want you to write a motivation letter, as a person, hoping to get a job.
+     I want you to write a motivation letter, as a person without saying the name of the person, hoping to get a job.
      You will add examples how my profile could bring value in the {activite}, and say 2 positive things about: {company_name}
    
      Objet: Lettre de motivation
