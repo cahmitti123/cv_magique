@@ -25,7 +25,9 @@ class CreateCvRequest(BaseModel):
     is_languages : bool
     is_skills : bool
     is_loisirs : bool
-    is_active: bool 
+    is_active: bool
+    text_size: Optional[int]
+    order_cate:Optional[str] 
     class Config:
         orm_mode = True
 
@@ -55,6 +57,8 @@ class CvResponse(BaseModel):
     is_skills : bool
     is_loisirs : bool
     is_active : bool
+    text_size: int
+    order_cate: str 
     
     
 
@@ -83,6 +87,8 @@ class UpdateCvRequest(BaseModel):
     is_skills : bool
     is_loisirs : bool
     is_active: bool 
+    text_size: int
+    order_cate: str 
     
 
 

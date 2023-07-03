@@ -33,6 +33,8 @@ class Cv(Base):
     is_skills = Column(Boolean, default=True)
     is_loisirs = Column(Boolean, default=True)
     is_active = Column(Boolean,default=True)
+    text_size = Column(Integer)
+    order_cate = Column(String(256))
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
     user = relationship("User", back_populates="cvs")
 

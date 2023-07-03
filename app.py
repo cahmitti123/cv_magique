@@ -282,6 +282,8 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
             "is_skills":cv.is_skills,
             "is_loisirs":cv.is_loisirs,
             "is_active":cv.is_active,
+            "text_size":cv.text_size,
+            "order_cate":cv.order_cate,
             "user_id": cv.user_id
         }
        
@@ -524,6 +526,8 @@ async def duplicate_cv(cv_id: str, session: AsyncSession = Depends(get_session),
         is_skills=cv.is_skills,
         is_loisirs=cv.is_loisirs,
         is_active = cv.is_active,
+        text_size = cv.text_size,
+        order_cate = cv.order_cate,
         user_id=user_id
     )
 
@@ -760,6 +764,8 @@ async def get_all_cvs(
             "is_skills":cv.is_skills,
             "is_loisirs": cv.is_loisirs,
             "is_active":cv.is_active,
+            "text_size":cv.text_size,
+            "order_cate":cv.order_cate,
             "user_id": cv.user_id
         }
         cv_dict['experiences'] = json.loads(cv_dict['experiences'])
@@ -1015,7 +1021,7 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
             
 
     return JSONResponse(content={'message': 'User information not available'})
-         
+    
 
 
 
