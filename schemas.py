@@ -20,12 +20,12 @@ class CreateCvRequest(BaseModel):
     languages: Optional[str] 
     skills: Optional[str] 
     loisirs: Optional[str] 
-    is_experiences : bool
-    is_education : bool
-    is_languages : bool
-    is_skills : bool
-    is_loisirs : bool
-    is_active: bool
+    is_experiences : Optional[bool]
+    is_education : Optional[bool]
+    is_languages : Optional[bool]
+    is_skills : Optional[bool]
+    is_loisirs : Optional[bool]
+    is_active: Optional[bool]
     text_size: Optional[int]
     order_cate:Optional[str] 
     class Config:
@@ -63,32 +63,32 @@ class CvResponse(BaseModel):
     
 
 class UpdateCvRequest(BaseModel):
-    nom: str 
-    prenom: str 
-    address: str 
-    email: str 
-    city: str 
-    country: str 
-    postalcode: str  
-    tele: str  
-    brief: str 
-    img_url: str 
-    style:str 
-    color:str  
-    description:str 
-    experiences: str
-    education: str 
-    languages: str 
-    skills: str  
-    loisirs:str 
-    is_experiences : bool
-    is_education : bool
-    is_languages : bool
-    is_skills : bool
-    is_loisirs : bool
-    is_active: bool 
-    text_size: int
-    order_cate: str 
+    nom: Optional[str] 
+    prenom: Optional[str] 
+    address: Optional[str] 
+    email: Optional[str] 
+    city: Optional[str] 
+    country: Optional[str] 
+    postalcode: Optional[str] 
+    tele: Optional[str] 
+    brief: Optional[str] 
+    img_url: Optional[str] 
+    style: Optional[str] 
+    color:Optional[str] 
+    description:Optional[str] 
+    experiences: Optional[str]                                              
+    education: Optional[str] 
+    languages: Optional[str] 
+    skills: Optional[str] 
+    loisirs: Optional[str] 
+    is_experiences : Optional[bool]
+    is_education : Optional[bool]
+    is_languages : Optional[bool]
+    is_skills : Optional[bool]
+    is_loisirs : Optional[bool]
+    is_active: Optional[bool]
+    text_size: Optional[int]
+    order_cate:Optional[str]  
     
 
 
