@@ -403,6 +403,38 @@ async def update_cv_image(
     # Return a success message
     return {"message": "CV image updated successfully"}
 
+# Upload CV image
+@app.post("/me/cvs/{cv_id}/image/upload")
+async def upload_cv_image(
+    cv_id: str,
+    image: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    # Save the uploaded image to a local folder
+    image_path = f"cv_images/{cv_id}_{image.filename}"
+    try:
+        with open(image_path, "wb") as file:
+            file.write(await image.read())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to save the image")
+
+    # Update the CV's image URL in the database
+    cv = await session.execute(select(Cv).where(Cv.id == cv_id and Cv.user_id == user_id))
+    cv = cv.scalar()
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    cv.img_url = image_path
+    await session.commit()
+
+    # Return a success message
+    return {"message": "CV image uploaded successfully"}
 
 
 
