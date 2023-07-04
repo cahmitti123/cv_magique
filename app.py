@@ -418,7 +418,7 @@ async def upload_cv_image(
     user_id = payload["user_id"]
 
     # Save the uploaded image to a local folder
-    image_path = f"cv_images/{cv_id}_{image.filename}"
+    image_path = f"profiles/{cv_id}_{image.filename}"
     try:
         with open(image_path, "wb") as file:
             file.write(await image.read())
