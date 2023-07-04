@@ -295,38 +295,6 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
     return cvs_dicts
 
 ################### Images Handling #######################
-# Upload CV image
-@app.post("/me/cvs/{cv_id}/image/upload")
-async def upload_cv_image(
-    cv_id: str,
-    image: UploadFile = File(...),
-    session: AsyncSession = Depends(get_session),
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-):
-    # Decode the access token
-    token = credentials.credentials
-    payload = decode_access_token(token)
-    user_id = payload["user_id"]
-
-    # Save the uploaded image to a local folder
-    image_path = f"cv_images/{cv_id}_{image.filename}"
-    try:
-        with open(image_path, "wb") as file:
-            file.write(await image.read())
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to save the image")
-
-    # Update the CV's image URL in the database
-    cv = await session.execute(select(Cv).where(Cv.id == cv_id and Cv.user_id == user_id))
-    cv = cv.scalar()
-    if not cv:
-        raise HTTPException(status_code=404, detail="CV not found")
-
-    cv.img_url = image_path
-    await session.commit()
-
-    # Return a success message
-    return {"message": "CV image uploaded successfully"}
 
 # import cv image
 @app.post("/me/cvs/{cv_id}/image")
@@ -435,6 +403,40 @@ async def update_cv_image(
 
     # Return a success message
     return {"message": "CV image updated successfully"}
+
+# Upload CV image
+@app.post("/me/cvs/{cv_id}/image/upload")
+async def upload_cv_image(
+    cv_id: str,
+    image: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    # Save the uploaded image to a local folder
+    image_path = f"cv_images/{cv_id}_{image.filename}"
+    try:
+        with open(image_path, "wb") as file:
+            file.write(await image.read())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to save the image")
+
+    # Update the CV's image URL in the database
+    cv = await session.execute(select(Cv).where(Cv.id == cv_id and Cv.user_id == user_id))
+    cv = cv.scalar()
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    cv.img_url = image_path
+    await session.commit()
+
+    # Return a success message
+    return {"message": "CV image uploaded successfully"}
+
 
 
 # delete cv image
@@ -559,7 +561,7 @@ async def duplicate_cv(cv_id: str, session: AsyncSession = Depends(get_session),
         is_active = cv.is_active,
         text_size = cv.text_size,
         right_cate = cv.right_cate,
-        left_cate=cv.left_cate,
+        left_cate = cv.left_cate,
         user_id=user_id
     )
 
@@ -797,8 +799,8 @@ async def get_all_cvs(
             "is_loisirs": cv.is_loisirs,
             "is_active":cv.is_active,
             "text_size":cv.text_size,
-            "left_cate":cv.left_cate,
             "right_cate":cv.right_cate,
+            "left_cate":cv.left_cate,
             "user_id": cv.user_id
         }
         cv_dict['experiences'] = json.loads(cv_dict['experiences'])
