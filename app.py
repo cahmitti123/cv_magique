@@ -11,7 +11,7 @@ import os
 import requests
 from fastapi.encoders import jsonable_encoder
 import boto3
-from starlette.responses import FileResponse
+from starlette.responses import StreamingResponse
 import urllib.parse
 from botocore.exceptions import NoCredentialsError
 from fastapi import UploadFile,File
@@ -437,7 +437,35 @@ async def upload_cv_image(
     # Return a success message
     return {"message": "CV image uploaded successfully"}
 
+#get the uploaded
+@app.get("/me/cvs/{cv_id}/uploaded/image")
+async def get_cv_image(
+    cv_id: str,
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
 
+    # Retrieve the CV from the database
+    cv = await session.execute(select(Cv).where(Cv.id == cv_id and Cv.user_id == user_id))
+    cv = cv.scalar()
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    # Check if the CV has an image URL
+    if not cv.img_url:
+        raise HTTPException(status_code=404, detail="CV image not found")
+
+    # Fetch the image from the external URL
+    response = requests.get(cv.img_url, stream=True)
+    if response.status_code != 200:
+        raise HTTPException(status_code=500, detail="Failed to fetch the image")
+
+    # Return the CV image as a StreamingResponse
+    return StreamingResponse(response.iter_content(chunk_size=1024), media_type="image/png")
 
 # delete cv image
 @app.delete("/me/cvs/{cv_id}/image")
