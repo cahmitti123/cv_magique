@@ -12,6 +12,7 @@ class CreateCvRequest(BaseModel):
     tele: Optional[str] 
     brief: Optional[str] 
     img_url: Optional[str] 
+    img_blob: Optional[str] 
     style: Optional[str] 
     color:Optional[str] 
     description:Optional[str] 
@@ -44,6 +45,7 @@ class CvResponse(BaseModel):
     tele: str
     brief: str
     img_url: str
+    img_blob:str
     style:str
     color:str
     description:str
@@ -75,6 +77,7 @@ class UpdateCvRequest(BaseModel):
     tele: Optional[str] 
     brief: Optional[str] 
     img_url: Optional[str] 
+    img_blob: Optional[str] 
     style: Optional[str] 
     color:Optional[str] 
     description:Optional[str] 

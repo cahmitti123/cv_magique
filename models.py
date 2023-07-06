@@ -19,6 +19,7 @@ class Cv(Base):
     tele = Column(String(256))
     brief = Column(String(50))
     img_url = Column(String(256))
+    img_blob = Column(String(256))
     style = Column(String(256))
     color = Column(String(256))
     description = Column(String(256))
