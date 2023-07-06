@@ -338,7 +338,7 @@ async def import_cv_image(
     await session.commit()
     response = requests.get(cv.img_url, stream=True)
     # Return a success message
-    return StreamingResponse(response.iter_content(chunk_size=1024), media_type="image/png")
+    return StreamingResponse(response.iter_content(chunk_size=1024), media_type="image/png",headers={"X-CV-Image-URL": cv.img_url})
 
 # GET CV image
 @app.get("/me/cvs/{cv_id}/image")
