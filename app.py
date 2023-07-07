@@ -338,7 +338,7 @@ async def import_cv_image(
     await session.commit()
     response = requests.get(cv.img_url, stream=True)
     # Return a success message
-    return StreamingResponse(response.iter_content(chunk_size=1024), media_type="image/png",headers={"X-CV-Image-URL": cv.img_url})
+    return StreamingResponse(response.iter_content(chunk_size=1024), media_type="image/png")
 
 # GET CV image
 @app.get("/me/cvs/{cv_id}/image")
@@ -365,6 +365,27 @@ async def get_cv_image(
     except requests.RequestException:
         raise HTTPException(status_code=500, detail="Failed to retrieve CV image")
     
+# GET CV image url
+@app.get("/me/cvs/{cv_id}/image/url")
+async def get_cv_image(
+    cv_id: str,
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    # Retrieve the CV from the database
+    cv = await session.execute(select(Cv).where(Cv.id == cv_id and Cv.user_id == user_id))
+    cv = cv.scalar()
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    # Return the CV's image URL
+    return {"img_url": cv.img_url}
+
 # delete cv image
 @app.delete("/me/cvs/{cv_id}/image")
 async def delete_cv_image(
