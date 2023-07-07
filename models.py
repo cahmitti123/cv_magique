@@ -40,6 +40,38 @@ class Cv(Base):
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
     user = relationship("User", back_populates="cvs")
 
+class PublicCv(Base):
+    __tablename__ = "publiccvs"
+    id = Column(String(50), primary_key=True, index=True)
+    nom = Column(String(50))
+    prenom = Column(String(50))
+    address = Column(String(50))
+    email = Column(String(50))
+    city = Column(String(256))
+    country = Column(String(256))
+    postalcode = Column(String(256))
+    tele = Column(String(256))
+    brief = Column(String(50))
+    img_url = Column(String(256))
+    img_blob = Column(String(256))
+    style = Column(String(256))
+    color = Column(String(256))
+    description = Column(String(256))
+    experiences = Column(Text(600))
+    education = Column(Text(600))
+    languages = Column(Text(600))
+    skills = Column(Text(600))
+    loisirs = Column(Text(600))
+    is_experiences = Column(Boolean, default=True) 
+    is_education = Column(Boolean, default=True) 
+    is_languages = Column(Boolean, default=True)
+    is_skills = Column(Boolean, default=True)
+    is_loisirs = Column(Boolean, default=True)
+    is_active = Column(Boolean,default=True)
+    text_size = Column(Float)
+    right_cate = Column(String(256))
+    left_cate = Column(String(256))
+    user_id = Column(Integer)
 
 class User(Base):
     __tablename__ = 'users'

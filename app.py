@@ -19,11 +19,11 @@ import jwt, json
 from json.decoder import JSONDecodeError
 from datetime import datetime, timedelta
 from models import User
-from schemas import CreateCvRequest,CreateUserRequest,UserLoginRequest,UpdateCvRequest,UpdateUserRequest,UserResponse,CreateLetterRequest,UpdateLetterRequest,UpdateCurrentUser
+from schemas import CreateCvRequest,CreatePublicCvRequest,UpdatePublicCvRequest,CvPublicResponse,CreateUserRequest,UserLoginRequest,UpdateCvRequest,UpdateUserRequest,UserResponse,CreateLetterRequest,UpdateLetterRequest,UpdateCurrentUser
 import json
 import uvicorn
 import random
-from models import Cv,User, Letter
+from models import Cv,User, Letter,PublicCv
 from fastapi.middleware.cors import CORSMiddleware
 from models import Base
 from starlette.config import Config
@@ -577,6 +577,125 @@ async def delete_cv(
     # Return a success message
     return {"message": "CV deleted successfully"}
 
+###################  Public CV Functionality ######################
+# Create public user CV
+@app.post("/api/cvs")
+async def create_cv(cv: CreatePublicCvRequest, session: AsyncSession = Depends(get_session)):
+    # Generate a CV ID
+    cv_id = generate_random_id()
+
+    # Create a new CV object from the request data
+    db_cv = cv.dict(exclude_none=True)
+    db_cv["id"] = cv_id
+    db_cv["experiences"] = json.dumps(cv.experiences)  # Convert experiences to JSON
+    db_cv["education"] = json.dumps(cv.education) 
+    db_cv["languages"] = json.dumps(cv.languages) 
+    db_cv["skills"] = json.dumps(cv.skills) 
+    db_cv["loisirs"] = json.dumps(cv.loisirs) 
+    cv = PublicCv(**db_cv)
+    
+    # Save the new CV to the database
+    session.add(cv)
+    await session.commit()
+
+    # Create a success message
+    message = f"CV with ID {cv.id} created successfully"
+
+    # Return the created CV and the success message as a response
+    return {
+        "cv": cv,
+        "message": message
+    }
+
+#assigned public cv to a user
+@app.post("/api/cvs/copycv/{cv_id}")
+async def copy_cv(cv_id: str, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    # Retrieve the CV to be duplicated
+    cv = await session.get(PublicCv, cv_id)
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+   
+
+    # Create a new CV object with the same data as the original CV
+    new_cv = Cv(
+        id=generate_random_id(),
+        nom=cv.nom,
+        prenom=cv.prenom,
+        address=cv.address,
+        email=cv.email,
+        city=cv.city,
+        country=cv.country,
+        postalcode=cv.postalcode,
+        tele=cv.tele,
+        brief=cv.brief,
+        img_url="",
+        img_blob="",
+        style=cv.style,
+        color=cv.color,
+        description=cv.description,
+        experiences=cv.experiences,
+        education=cv.education,
+        languages=cv.languages,
+        skills=cv.skills,
+        loisirs=cv.loisirs,
+        is_experiences=cv.is_experiences,
+        is_education=cv.is_education,
+        is_languages=cv.is_languages,
+        is_skills=cv.is_skills,
+        is_loisirs=cv.is_loisirs,
+        is_active = cv.is_active,
+        text_size = cv.text_size,
+        right_cate = cv.right_cate,
+        left_cate = cv.left_cate,
+        user_id=user_id
+    )
+
+    # Save the new CV to the database
+    session.add(new_cv)
+    await session.commit()
+
+    # Return the duplicated CV
+    return {"cv": new_cv, "message": "CV assigned to user successfully"}
+
+
+# Update CV
+@app.put("/api/cvs/{cv_id}")
+async def update_cv(cv_id: str, cv_data: UpdatePublicCvRequest, session: AsyncSession = Depends(get_session)):
+    # Retrieve the CV to be updated
+    cv = await session.get(PublicCv, cv_id)
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    # Update the CV with the provided data
+    for field, value in cv_data.dict(exclude_unset=True).items():
+        setattr(cv, field, value)
+
+    # Commit the changes to the database
+    await session.commit()
+
+    # Return the updated CV
+    return {"cv": cv, "message": "CV updated successfully"}
+
+
+# Delete CV
+@app.delete("/api/cvs/{cv_id}")
+async def delete_cv(cv_id: str, session: AsyncSession = Depends(get_session)):
+    # Retrieve the CV from the database
+    cv = await session.get(PublicCv, cv_id)
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    # Delete the CV from the database
+    await session.delete(cv)
+    await session.commit()
+
+    # Return a success message
+    return {"message": "CV deleted successfully"}
 
 
 ####################### ADMIN CRUD #################################
