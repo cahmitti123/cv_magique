@@ -657,6 +657,7 @@ async def copy_cv(cv_id: str, session: AsyncSession = Depends(get_session), cred
 
     # Save the new CV to the database
     session.add(new_cv)
+    await session.delete(cv)
     await session.commit()
 
     # Return the duplicated CV
