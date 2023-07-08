@@ -623,7 +623,7 @@ async def copy_cv(cv_id: str, session: AsyncSession = Depends(get_session), cred
 
     # Create a new CV object with the same data as the original CV
     new_cv = Cv(
-        id=generate_random_id(),
+        id=cv_id,
         nom=cv.nom,
         prenom=cv.prenom,
         address=cv.address,
