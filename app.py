@@ -607,6 +607,49 @@ async def create_cv(cv: CreatePublicCvRequest, session: AsyncSession = Depends(g
         "message": message
     }
 
+# Get CV by ID
+@app.get("/api/cvs/{cv_id}")
+async def get_cv(cv_id: str, session: AsyncSession = Depends(get_session)):
+    # Retrieve the CV from the database
+    cv = await session.get(PublicCv, cv_id)
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    # Return the CV
+    cv_info = {
+            "id": cv_id,
+            "nom": cv.nom,
+            "prenom": cv.prenom,
+            "address": cv.address,
+            "email": cv.email,
+            "city": cv.city,
+            "country": cv.country,
+            "postalcode": cv.postalcode,
+            "tele": cv.tele,
+            "brief": cv.brief,
+            "img_url": cv.img_url,
+            "img_blob": cv.img_blob,
+            "style": cv.style,
+            "color": cv.color,
+            "description": cv.description,
+            "experiences": try_json_loads(cv.experiences),
+            "education": try_json_loads(cv.education),
+            "languages": try_json_loads(cv.languages),
+            "skills": try_json_loads(cv.skills),
+            "loisirs": try_json_loads(cv.loisirs),
+            "is_experiences":cv.is_experiences,
+            "is_education":cv.is_education,
+            "is_languages":cv.is_languages,
+            "is_education":cv.is_education,
+            "is_skills":cv.is_skills,
+            "is_loisirs":cv.is_loisirs,
+            "is_active":cv.is_active,
+            "text_size":cv.text_size,
+            "right_cate":cv.right_cate,
+            "left_cate":cv.left_cate,
+        }
+    return {"cv": cv_info}
+
 #assigned public cv to a user
 @app.post("/api/cvs/copycv/{cv_id}")
 async def copy_cv(cv_id: str, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
