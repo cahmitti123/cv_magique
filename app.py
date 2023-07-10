@@ -386,6 +386,111 @@ async def get_cv_image(
     # Return the CV's image URL
     return {"img_url": cv.img_url}
 
+################## public cv images functionalities #################
+# import cv image
+@app.post("/api/cvs/{cv_id}/image")
+async def import_cv_image(
+    cv_id: str,
+    image: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session)
+):
+    # Save the uploaded image to DigitalOcean Spaces
+    image_path = f"cvmagic/{cv_id}_{image.filename}"
+    try:
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=DIGITALOCEAN_SPACES_ENDPOINT_URL,
+            aws_access_key_id=DIGITALOCEAN_SPACES_ACCESS_KEY,
+            aws_secret_access_key=DIGITALOCEAN_SPACES_SECRET_KEY
+        )
+        s3.upload_fileobj(
+            image.file,
+            DIGITALOCEAN_SPACES_NAME,
+            image_path,
+            ExtraArgs={"ACL": "public-read"}
+        )
+    except NoCredentialsError:
+        raise HTTPException(status_code=500, detail="Failed to connect to DigitalOcean Spaces")
+
+    # Update the CV's image URL in the database
+    cv = await session.execute(select(PublicCv).where(PublicCv.id == cv_id))
+    cv = cv.scalar()
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    cv.img_url = f"{DIGITALOCEAN_SPACES_ENDPOINT_URL}/{DIGITALOCEAN_SPACES_NAME}/{image_path}"
+    await session.commit()
+    response = requests.get(cv.img_url, stream=True)
+    # Return a success message
+    return StreamingResponse(response.iter_content(chunk_size=1024), media_type="image/png")
+
+# GET CV image
+@app.get("/api/cvs/{cv_id}/image")
+async def get_cv_image(
+    cv_id: str,
+    session: AsyncSession = Depends(get_session)
+):
+    # Retrieve the CV from the database
+    cv = await session.execute(select(PublicCv).where(PublicCv.id == cv_id))
+    cv = cv.scalar()
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    # Send a request to the CV's image URL and return it as a streaming response
+    try:
+        response = requests.get(cv.img_url, stream=True)
+        return StreamingResponse(response.iter_content(chunk_size=1024), media_type="image/png")
+    except requests.RequestException:
+        raise HTTPException(status_code=500, detail="Failed to retrieve CV image")
+
+# GET CV image url
+@app.get("/api/cvs/{cv_id}/image/url")
+async def get_cv_image_url(
+    cv_id: str,
+    session: AsyncSession = Depends(get_session)
+):
+    # Retrieve the CV from the database
+    cv = await session.execute(select(PublicCv).where(PublicCv.id == cv_id))
+    cv = cv.scalar()
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    # Return the CV's image URL
+    return {"img_url": cv.img_url}
+
+# delete cv image
+@app.delete("/api/cvs/{cv_id}/image")
+async def delete_cv_image(
+    cv_id: str,
+    session: AsyncSession = Depends(get_session)
+):
+    # Retrieve the CV from the database
+    cv = await session.execute(select(PublicCv).where(PublicCv.id == cv_id))
+    cv = cv.scalar()
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    # Delete the CV image from DigitalOcean Spaces
+    image_path = cv.img_url.replace(f"{DIGITALOCEAN_SPACES_ENDPOINT_URL}/{DIGITALOCEAN_SPACES_NAME}/", "")
+    try:
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=DIGITALOCEAN_SPACES_ENDPOINT_URL,
+            aws_access_key_id=DIGITALOCEAN_SPACES_ACCESS_KEY,
+            aws_secret_access_key=DIGITALOCEAN_SPACES_SECRET_KEY
+        )
+        s3.delete_object(Bucket=DIGITALOCEAN_SPACES_NAME, Key=image_path)
+    except NoCredentialsError:
+        raise HTTPException(status_code=500, detail="Failed to connect to DigitalOcean Spaces")
+
+    # Clear the CV's image URL in the database
+    cv.img_url = None
+    await session.commit()
+
+    # Return a success message
+    return {"message": "CV image deleted successfully"}
+
+
 # delete cv image
 @app.delete("/me/cvs/{cv_id}/image")
 async def delete_cv_image(
