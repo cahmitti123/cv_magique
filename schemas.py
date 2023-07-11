@@ -134,6 +134,7 @@ class UserLoginRequest(BaseModel):
     hashed_password: str
 
 class UpdatePasswordRequest(BaseModel):
+    fullname:str
     current_password: str
     new_password: str
 
