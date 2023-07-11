@@ -257,7 +257,7 @@ async def update_password(password_update: UpdatePasswordRequest, session: Async
     # Commit the changes to the database
     await session.commit()
 
-    return {"message": "Password updated successfully"}
+    return {"message": "Infos updated successfully"}
 
 
 
