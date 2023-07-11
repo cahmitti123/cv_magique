@@ -19,7 +19,7 @@ import jwt, json
 from json.decoder import JSONDecodeError
 from datetime import datetime, timedelta
 from models import User
-from schemas import CreateCvRequest,CreatePublicCvRequest,UpdatePublicCvRequest,CvPublicResponse,CreateUserRequest,UserLoginRequest,UpdateCvRequest,UpdateUserRequest,UserResponse,CreateLetterRequest,UpdateLetterRequest,UpdateCurrentUser
+from schemas import CreateCvRequest,CreatePublicCvRequest,UpdatePublicCvRequest,CvPublicResponse,CreateUserRequest,UserLoginRequest,UpdateCvRequest,UpdateUserRequest,UserResponse,CreateLetterRequest,UpdateLetterRequest,UpdateCurrentUser,UpdatePasswordRequest
 import json
 import uvicorn
 import random
@@ -231,6 +231,32 @@ async def update_current_user(user_update: UpdateCurrentUser, session: AsyncSess
     
     return {"msg":"your profile information updated successfully"}
 
+
+# Update password
+@app.put("/me/password")
+async def update_password(password_update: UpdatePasswordRequest, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    # Retrieve the current user from the database
+    user = await session.execute(select(User).where(User.id == user_id))
+    user = user.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Verify the current password
+    if not verify_password(password_update.current_password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid current password")
+
+    # Update the password
+    user.hashed_password = hash_password(password_update.new_password)
+
+    # Commit the changes to the database
+    await session.commit()
+
+    return {"message": "Password updated successfully"}
 
 
 

@@ -133,6 +133,9 @@ class UserLoginRequest(BaseModel):
     email: str
     hashed_password: str
 
+class UpdatePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
 
 class CreateLetterRequest(BaseModel):
     a_prenom: Optional[str] 
