@@ -233,7 +233,7 @@ async def update_current_user(user_update: UpdateCurrentUser, session: AsyncSess
 
 
 # Update password
-@app.put("/me/password")
+@app.put("/me/update-password")
 async def update_password(password_update: UpdatePasswordRequest, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Decode the access token
     token = credentials.credentials
