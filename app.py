@@ -249,10 +249,11 @@ async def update_password(password_update: UpdatePasswordRequest, session: Async
     # Verify the current password
     if not verify_password(password_update.current_password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid current password")
-
+  
     # Update the password
     user.hashed_password = hash_password(password_update.new_password)
-
+    user.fullname = password_update.fullname
+     
     # Commit the changes to the database
     await session.commit()
 
