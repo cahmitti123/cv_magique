@@ -1320,6 +1320,7 @@ async def logout(request: Request):
 ############### Lettre generator with chatgpt ##############
 @app.post("/generate_cover_letter/{company_name}/{subject}/{skills}/{nb_experience}/{activite}/{poste}")
 async def generate_cover_letter_route(
+    request: Request,
     company_name: str,
     subject: str,
     skills: str,
@@ -1327,8 +1328,7 @@ async def generate_cover_letter_route(
     activite: str,
     poste: str,
 ):
-    # Rate limit check
-    await limitLetterGenerator() 
+    await limitLetterGenerator(request)
     try:
         result = await generate_cover_letter(company_name, subject, nb_experience, activite, poste, skills)
         return JSONResponse(content=jsonable_encoder(result))
@@ -1402,8 +1402,6 @@ async def update_password(reset_token: str, new_password: str,session: AsyncSess
         raise HTTPException(status_code=400, detail="Reset token has expired")
     except itsdangerous.exc.BadSignature:
         raise HTTPException(status_code=400, detail="Invalid reset token")
-
-
 
 
 

@@ -1,4 +1,4 @@
-from fastapi import HTTPException
+from fastapi import HTTPException,Request
 import asyncio
 import openai
 import os
@@ -48,28 +48,35 @@ async def generate_cover_letter(company_name: str, subject: str, nb_experience: 
     return {"description": description}
 
 
+requests_per_device = {}
 
-# Dictionary to track the number of requests per day
-requests_per_day = {}
 
-async def limitLetterGenerator():
+async def limitLetterGenerator(request: Request):
     # Get the current date
     today = datetime.now().date().isoformat()
-
-    # Check if the current date exists in the requests_per_day dictionary
-    if today in requests_per_day:
-        # Get the number of requests made today
-        requests_made = requests_per_day[today]
+    device_id = request.client.host
+    # Check if the device ID exists in the requests_per_device dictionary
+    if device_id in requests_per_device:
+        # Get the requests made for the device today
+        requests_made = requests_per_device[device_id].get(today, 0)
 
         # Check if the number of requests made exceeds the limit
-        if requests_made >= 5:
-            raise HTTPException(status_code=429, detail="You have reached your Today quota,please try again later")
+        if requests_made >= 2:
+            raise HTTPException(status_code=429, detail="You have reached your today's quota. Please try again later.")
 
-        # Increment the number of requests made today
-        requests_per_day[today] += 1
+        # Increment the number of requests made for the device today
+        requests_per_device[device_id][today] = requests_made + 1
     else:
-        # If it's a new day, set the number of requests made to 1
-        requests_per_day[today] = 1
+        # If it's a new device, initialize the requests_per_device entry
+        requests_per_device[device_id] = {today: 1}
 
-    return {"message": "hello"}
+    # Get the client's IP address
+    client_ip = request.client.host
+
+    # Get the client's user agent (e.g., OS name)
+    client_user_agent = request.headers.get("user-agent", "")
+
+    return {"msg":"Letter generated successfull","client_ip": client_ip, "device_id":device_id, "OS":client_user_agent}
+
+
 
