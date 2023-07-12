@@ -2,6 +2,7 @@ from fastapi import HTTPException
 import asyncio
 import openai
 import os
+from datetime import datetime, timedelta
 
 async def generate_cover_letter(company_name: str, subject: str, nb_experience: int, activite: str, poste: str, skills: str):
     cover_letter_prompt = f"""
@@ -48,7 +49,27 @@ async def generate_cover_letter(company_name: str, subject: str, nb_experience: 
 
 
 
+# Dictionary to track the number of requests per day
+requests_per_day = {}
 
+async def limitLetterGenerator():
+    # Get the current date
+    today = datetime.now().date().isoformat()
 
+    # Check if the current date exists in the requests_per_day dictionary
+    if today in requests_per_day:
+        # Get the number of requests made today
+        requests_made = requests_per_day[today]
 
+        # Check if the number of requests made exceeds the limit
+        if requests_made >= 5:
+            raise HTTPException(status_code=429, detail="You have reached your Today quota,please try again later")
+
+        # Increment the number of requests made today
+        requests_per_day[today] += 1
+    else:
+        # If it's a new day, set the number of requests made to 1
+        requests_per_day[today] = 1
+
+    return {"message": "hello"}
 

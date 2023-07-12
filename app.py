@@ -28,10 +28,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from models import Base
 from starlette.config import Config
 from starlette.requests import Request
+from fastapi_limiter import FastAPILimiter
+from fastapi_limiter.depends import RateLimiter
+
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import JSONResponse,RedirectResponse
 from authlib.integrations.starlette_client import OAuth, OAuthError
-from letter_generator import generate_cover_letter
+from letter_generator import generate_cover_letter,limitLetterGenerator
 from dotenv import load_dotenv
 from itsdangerous import URLSafeTimedSerializer
 from starlette.exceptions import HTTPException
@@ -51,6 +54,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Initialize the rate limiter
+limiter = FastAPILimiter()
 
 config = Config('.env')
 oauth = OAuth(config)
@@ -81,8 +86,10 @@ async def create_tables():
 
 @app.on_event("startup")
 async def startup():
+    # Attach the rate limiter to the app
     print(DATABASE_URL)
     await asyncio.create_task(create_tables())
+
 
 
 # Credentials Elements of JWTauthentication
@@ -1320,6 +1327,8 @@ async def generate_cover_letter_route(
     activite: str,
     poste: str,
 ):
+    # Rate limit check
+    await limitLetterGenerator() 
     try:
         result = await generate_cover_letter(company_name, subject, nb_experience, activite, poste, skills)
         return JSONResponse(content=jsonable_encoder(result))
@@ -1393,6 +1402,9 @@ async def update_password(reset_token: str, new_password: str,session: AsyncSess
         raise HTTPException(status_code=400, detail="Reset token has expired")
     except itsdangerous.exc.BadSignature:
         raise HTTPException(status_code=400, detail="Invalid reset token")
+
+
+
 
 
 
