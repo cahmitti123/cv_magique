@@ -12,7 +12,7 @@ import requests
 from fastapi.encoders import jsonable_encoder
 import boto3
 from starlette.responses import StreamingResponse
-import urllib.parse
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 from botocore.exceptions import NoCredentialsError
 from fastapi import UploadFile,File
 import jwt, json
@@ -1264,8 +1264,17 @@ oauth.register(
 
 @app.get('/google/login')
 async def login(request: Request):
-    redirect_uri = "https://oyster-app-7rf7n.ondigitalocean.app/auth"
-    return await oauth.google.authorize_redirect(request, redirect_uri)
+    redirect_uri = "https://app.cvmagique.fr/auth"
+    google_uri = await oauth.google.authorize_redirect(request, redirect_uri)
+    return google_uri
+    
+
+
+
+
+
+
+
     
 
 
