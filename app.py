@@ -66,9 +66,9 @@ DB_USER = os.environ.get('DB_USER')
 DB_PASS = os.environ.get('DB_PASS')
 DB_BASE = os.environ.get('DB_BASE')
 
-#EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
-EMAIL_PASSWORD = "Lideo@2023"
 
+EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
+EMAIL = os.environ.get('EMAIL')
 
 DIGITALOCEAN_SPACES_ACCESS_KEY = os.environ.get('DIGITALOCEAN_SPACES_ACCESS_KEY')
 DIGITALOCEAN_SPACES_SECRET_KEY = os.environ.get('DIGITALOCEAN_SPACES_SECRET_KEY')
@@ -1271,13 +1271,6 @@ async def login(request: Request):
 
 
 
-
-
-
-
-    
-
-
 @app.get('/auth')
 async def auth(request: Request, session: AsyncSession = Depends(get_session)):
     try:
@@ -1352,7 +1345,7 @@ async def generate_cover_letter_route(
 serializer = URLSafeTimedSerializer(SECRET_KEY)
 
 def send_email(email: str, subject: str, body: str):
-    sender = "abdessamad.e@lideo.co"
+    sender = EMAIL
     receiver = email
     message = MIMEText(body, "html")
     message["Subject"] = subject
