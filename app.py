@@ -1264,7 +1264,7 @@ oauth.register(
 
 @app.get('/google/login')
 async def login(request: Request):
-    redirect_uri = "https://oyster-app-7rf7n.ondigitalocean.app/auth"
+    redirect_uri = "https://app.cvmagique.fr/auth"
     return await oauth.google.authorize_redirect(request, redirect_uri)
     
 
