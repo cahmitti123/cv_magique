@@ -118,3 +118,30 @@ class Letter(Base):
 
 
 
+class PublicLetter(Base):
+    __tablename__ = "publicletters"
+    id = Column(String(50), primary_key=True, index=True)
+    a_prenom= Column(String(256))
+    a_nom= Column(String(256))
+    a_email= Column(String(256))
+    a_ville= Column(String(256))
+    a_adresse= Column(String(256))
+    a_Code_postal= Column(String(256))
+    a_tele= Column(String(256))
+    b_prenom= Column(String(256))
+    b_nom= Column(String(256))
+    b_entreprise= Column(String(256))
+    b_ville= Column(String(256))      
+    b_adresse= Column(String(256))
+    b_Code_postal= Column(String(256))
+    objet= Column(String(256))
+    date= Column(String(256))
+    lieu= Column(String(256))
+    color = Column(String(256))
+    style = Column(String(256)) 
+    lettre_de_motivation= Column(Text(600))   
+    signature= Column(String(256))
+    is_active= Column(Boolean, default=True)
+    user_id = Column(Integer)
+  
+

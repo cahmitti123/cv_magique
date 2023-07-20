@@ -287,7 +287,51 @@ class UpdatePublicCvRequest(BaseModel):
 
 
 
+#create public letter
+class CreatePublicLetterRequest(BaseModel):
+    a_prenom: Optional[str] 
+    a_nom: Optional[str] 
+    a_email: Optional[str] 
+    a_ville: Optional[str] 
+    a_adresse: Optional[str] 
+    a_Code_postal: Optional[str] 
+    a_tele: Optional[str] 
+    b_prenom: Optional[str] 
+    b_nom: Optional[str] 
+    b_entreprise: Optional[str] 
+    b_ville: Optional[str] 
+    b_adresse: Optional[str] 
+    b_Code_postal: Optional[str] 
+    objet: Optional[str] 
+    date: Optional[str] 
+    lieu: Optional[str] 
+    style:Optional[str] 
+    color:Optional[str] 
+    lettre_de_motivation: Optional[str] 
+    signature: Optional[str] 
+    is_active: bool
+    class Config:
+        orm_mode = True
 
-
-
-
+class UpdatePublicLetterRequest(BaseModel):
+    a_prenom: str = None
+    a_nom: str = None
+    a_email: str = None
+    a_ville: str = None
+    a_adresse: str = None
+    a_Code_postal: str = None
+    a_tele: str = None
+    b_prenom: str = None
+    b_nom: str = None
+    b_entreprise: str = None
+    b_ville: str = None
+    b_adresse: str = None
+    b_Code_postal: str = None
+    objet: str = None
+    date: str = None
+    lieu: str = None
+    style:str = None
+    color:str = None
+    lettre_de_motivation: str = None
+    signature: str = None
+    is_active:bool 

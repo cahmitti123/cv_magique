@@ -19,11 +19,11 @@ import jwt, json
 from json.decoder import JSONDecodeError
 from datetime import datetime, timedelta
 from models import User
-from schemas import CreateCvRequest,CreatePublicCvRequest,UpdatePublicCvRequest,CvPublicResponse,CreateUserRequest,UserLoginRequest,UpdateCvRequest,UpdateUserRequest,UserResponse,CreateLetterRequest,UpdateLetterRequest,UpdateCurrentUser,UpdatePasswordRequest
+from schemas import CreateCvRequest,CreatePublicCvRequest,UpdatePublicCvRequest,CvPublicResponse,CreateUserRequest,UserLoginRequest,UpdateCvRequest,UpdateUserRequest,UserResponse,CreateLetterRequest,UpdateLetterRequest,UpdateCurrentUser,UpdatePasswordRequest,CreatePublicLetterRequest,UpdatePublicLetterRequest
 import json
 import uvicorn
 import random
-from models import Cv,User, Letter,PublicCv
+from models import Cv,User, Letter,PublicCv,PublicLetter
 from fastapi.middleware.cors import CORSMiddleware
 from models import Base
 from starlette.config import Config
@@ -1242,6 +1242,132 @@ async def get_current_user_letters(session: AsyncSession = Depends(get_session),
 
     # Return the letter data
     return letters_dicts
+
+########### Public Letters  CRUD #####################
+#create public letter
+@app.post("/api/letters")
+async def create_public_letter(letter: CreatePublicLetterRequest, session: AsyncSession = Depends(get_session)):
+    letter_id = generate_random_id()
+    # Create a new Letter object from the request data
+    db_letter = letter.dict(exclude_none=True)
+    db_letter["id"] = letter_id
+    letter = PublicLetter(**db_letter)
+    
+    # Save the new letter to the database
+    session.add(letter)
+    await session.commit()
+
+    # Create a success message
+    message = f"Letter created successfully"
+
+    # Return the created letter and the success message as a response
+    return {
+        "letter": letter,
+        "message": message
+    }
+
+#Get Letter By ID
+@app.get("/api/letter/{letter_id}")
+async def get_public_letter(letter_id: str, session: AsyncSession = Depends(get_session)):
+    # Retrieve the CV from the database
+    letter = await session.get(PublicLetter, letter_id)
+    if not letter:
+        raise HTTPException(status_code=404, detail="letter not found")
+
+    # Return the CV
+    letter_info = {
+            "id": letter_id,
+            "a_prenom": letter.a_prenom,
+            "a_nom": letter.a_nom,
+            "a_email": letter.a_email,
+            "a_ville": letter.a_ville,
+            "a_adresse": letter.a_adresse,
+            "a_Code_postal": letter.a_Code_postal,
+            "a_tele": letter.a_tele,
+            "b_prenom": letter.b_prenom,
+            "b_nom": letter.b_nom,
+            "b_entreprise": letter.b_entreprise,
+            "b_ville": letter.b_ville,
+            "b_adresse": letter.b_adresse,
+            "b_Code_postal": letter.b_Code_postal,
+            "objet": letter.objet,
+            "date": letter.date,
+            "lieu": letter.lieu,
+            "style":letter.style,
+            "color":letter.color,
+            "lettre_de_motivation": letter.lettre_de_motivation,
+            "signature": letter.signature,
+            "is_active": letter.is_active,
+            "user_id": letter.user_id
+        }
+    return {"letter": letter_info }
+
+#update public letter 
+@app.put("/api/letter/{letter_id}")
+async def update_public_letter(letter_id: str, letter_data: UpdatePublicLetterRequest, session: AsyncSession = Depends(get_session)):
+   
+    # Retrieve the letter to be updated
+    letter = await session.get(PublicLetter, letter_id)
+    if not letter:
+        raise HTTPException(status_code=404, detail="Letter not found")
+
+    # Update the letter with the provided data
+    for field, value in letter_data.dict(exclude_unset=True).items():
+        setattr(letter, field, value)
+
+    # Commit the changes to the database
+    await session.commit()
+
+    # Return the updated letter
+    return {"letter": letter, "message": "Letter updated successfully"}
+
+
+#assigned letter to user
+@app.post("/api/letters/copyletter/{letter_id}")
+async def copy_letter(letter_id: str, session: AsyncSession = Depends(get_session), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    # Retrieve the letter to be duplicated
+    letter = await session.get(PublicLetter, letter_id)
+    if not letter:
+        raise HTTPException(status_code=404,detail="letter not found")
+    # Create a new letter object with the same data as the original letter
+    new_letter = Letter(
+        id=letter_id,
+        a_prenom=letter.a_prenom,
+        a_nom=letter.a_nom,
+        a_email=letter.a_email,
+        a_ville=letter.a_ville,
+        a_adresse=letter.a_adresse,
+        a_Code_postal=letter.a_Code_postal,
+        a_tele=letter.a_tele,
+        b_prenom=letter.b_prenom,
+        b_nom=letter.b_nom,
+        b_entreprise=letter.b_entreprise,
+        b_ville=letter.b_ville,
+        b_adresse=letter.b_adresse,
+        b_Code_postal=letter.b_Code_postal,
+        objet=letter.objet,
+        date=letter.date,
+        lieu=letter.lieu,
+        style=letter.style,
+        color=letter.color,
+        lettre_de_motivation=letter.lettre_de_motivation,
+        signature=letter.signature,
+        is_active=letter.is_active,
+        user_id=user_id
+    )
+
+    # Save the new letter to the database
+    session.add(new_letter)
+    await session.delete(letter)
+    await session.commit()
+
+    # Return the duplicated letter
+    return {"letter": new_letter, "message": "Letter assigned to user successfully"}
 
 
 ########################## GOOGLE AUTHENTICATION ###########################
