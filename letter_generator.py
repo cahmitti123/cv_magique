@@ -6,21 +6,25 @@ from datetime import datetime, timedelta
 
 async def generate_cover_letter(company_name: str, subject: str, nb_experience: int, activite: str, poste: str, skills: str):
     cover_letter_prompt = f"""
-    "Please ignore all previous instructions.
+    "Veuillez ignorer toutes les instructions précédentes.
 
-     Output langage: French
+    Rédige-moi une lettre de motivation en suivant les étapes suivantes:
 
-     I want you to write a motivation letter, as a person without saying the name of the person, hoping to get a job.
-     You will add examples how my profile could bring value in the {activite}, and say 2 positive things about: {company_name}
+    Introduction : Dans le premier paragraphe, présentation brève. Indiquer le {subject} et le {poste} pour lequel on postule ou le motif de la candidature.
+    
+    Corps de la lettre : Dans les paragraphes suivants, mettre en avant les {skills}, les {nb_experience} expériences professionnelles et les réalisations pertinentes.
+    Faire le lien entre les {skills} et les exigences du poste visé. Éviter de simplement répéter ce qui est déjà dans le CV, mais plutôt,
+    apporter des exemples concrets des réalisations et expliquer comment contribuer à {company_name} dans le domaine de {activite}.
+
+    Expliquer pourquoi le candidat est intéressé par le {poste} et {company_name}. Mettez en évidence ce qui peut attirer dans le travail proposé.
+
+    Dans le dernier paragraphe, exprimer de l'enthousiasme pour rejoindre l'entreprise {company_name} et réitérer l'intérêt pour le poste. 
+    Mentionner que le candidat serait ravi de discuter plus en détail de sa candidature lors d'un entretien.
+
+    Formule de politesse : Utiliser une formule de politesse appropriée pour conclure la lettre, 
    
-     Objet: Lettre de motivation
-     subject: {subject}
-     Entreprise destinataire : {company_name}
-     Nombre d'années d'expérience: {nb_experience}
-     Domaine d'activité : {activite}
-     competences: {skills}
-     Poste souhaité : {poste}
-     Please don´t explain anything of what your are going to do .Just do it."
+
+    and Stop Stop Stop 
     """
     api_key = os.environ.get('OPENAI_API_KEY')  # Retrieve your API key from an environment variable
 
@@ -77,6 +81,5 @@ async def limitLetterGenerator(request: Request):
     client_user_agent = request.headers.get("user-agent", "")
 
     return {"msg":"Letter generated successfull","client_ip": client_ip, "device_id":device_id, "OS":client_user_agent}
-
 
 

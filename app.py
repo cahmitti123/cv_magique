@@ -708,7 +708,19 @@ async def delete_cv(
     # Check if the CV belongs to the current user
     if cv.user_id != user_id:
         raise HTTPException(status_code=403, detail="Unauthorized access")
-
+    
+    # Delete the CV image from DigitalOcean Spaces
+    image_path = cv.img_url.replace(f"{DIGITALOCEAN_SPACES_ENDPOINT_URL}/{DIGITALOCEAN_SPACES_NAME}/", "")
+    try:
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=DIGITALOCEAN_SPACES_ENDPOINT_URL,
+            aws_access_key_id=DIGITALOCEAN_SPACES_ACCESS_KEY,
+            aws_secret_access_key=DIGITALOCEAN_SPACES_SECRET_KEY
+        )
+        s3.delete_object(Bucket=DIGITALOCEAN_SPACES_NAME, Key=image_path)
+    except NoCredentialsError:
+        raise HTTPException(status_code=500, detail="Failed to connect to DigitalOcean Spaces")
     # Delete the CV from the database
     await session.delete(cv)
     await session.commit()
