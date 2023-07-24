@@ -151,7 +151,7 @@ async def register_user(request: CreateUserRequest, session: AsyncSession = Depe
     # Check if the email is already registered
     existing_user = await session.execute(select(User).where(User.email == request.email))
     if existing_user.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="Email déjà enregistré")
 
     # Create a new user
     user = User(
@@ -165,7 +165,7 @@ async def register_user(request: CreateUserRequest, session: AsyncSession = Depe
     await session.commit()
 
     # Return the registered user
-    message = f"User  created successfully"
+    message = f"Utilisateur créé avec succès"
     return {"message":message}
 
 @app.post("/login")
@@ -174,11 +174,11 @@ async def login_user(request: UserLoginRequest, session: AsyncSession = Depends(
     user = await session.execute(select(User).where(User.email == request.email))
     user = user.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        raise HTTPException(status_code=401, detail="Email ou mot de passe invalide")
 
     # Verify the password
     if not verify_password(request.hashed_password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        raise HTTPException(status_code=401, detail="Email ou mot de passe invalide")
 
     # Generate the access token
     access_token = create_access_token(user.id)
@@ -198,7 +198,7 @@ async def get_current_user(session: AsyncSession = Depends(get_session), credent
     user = await session.execute(select(User).where(User.id == user_id))
     user = user.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
 
     # Create a dictionary from the user object
     user_dict = {
@@ -224,7 +224,7 @@ async def update_current_user(user_update: UpdateCurrentUser, session: AsyncSess
     user = await session.execute(select(User).where(User.id == user_id))
     user = user.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
 
     # Update user information
     user.fullname = user_update.fullname
@@ -236,7 +236,7 @@ async def update_current_user(user_update: UpdateCurrentUser, session: AsyncSess
 
     # Return the updated user data
     
-    return {"msg":"your profile information updated successfully"}
+    return {"msg":"Les informations de votre profil ont été mises à jour avec succès"}
 
 
 # Update password
@@ -251,11 +251,11 @@ async def update_password(password_update: UpdatePasswordRequest, session: Async
     user = await session.execute(select(User).where(User.id == user_id))
     user = user.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
 
     # Verify the current password
     if not verify_password(password_update.current_password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid current password")
+        raise HTTPException(status_code=401, detail="Mot de passe actuel invalide")
   
     # Update the password
     user.hashed_password = hash_password(password_update.new_password)
@@ -264,7 +264,7 @@ async def update_password(password_update: UpdatePasswordRequest, session: Async
     # Commit the changes to the database
     await session.commit()
 
-    return {"message": "Infos updated successfully"}
+    return {"message": "Informations mises à jour avec succès"}
 
 
 
@@ -1523,7 +1523,7 @@ async def reset_password(email: str,session: AsyncSession = Depends(get_session)
     # Send the reset link to the user's email
     send_email(email, subject, body)
 
-    return {"message": "Password reset link has been sent to your email"}
+    return {"message": "Le lien de réinitialisation du mot de passe a été envoyé à votre adresse e-mail"}
 
 
 @app.put("/reset-password", status_code=200)
@@ -1541,7 +1541,7 @@ async def update_password(reset_token: str, new_password: str,session: AsyncSess
         user.hashed_password = hash_password(new_password)
         await session.commit()
 
-        return {"message": "Password has been updated successfully"}
+        return {"message": "Le mot de passe a été mis à jour avec succès"}
     except itsdangerous.exc.SignatureExpired:
         raise HTTPException(status_code=400, detail="Reset token has expired")
     except itsdangerous.exc.BadSignature:
