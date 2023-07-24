@@ -6,8 +6,7 @@ from datetime import datetime, timedelta
 
 async def generate_cover_letter(company_name: str, subject: str, nb_experience: int, activite: str, poste: str, skills: str):
     cover_letter_prompt = f"""
-    "Veuillez ignorer toutes les instructions précédentes.
-
+    "
     Rédige-moi une lettre de motivation en suivant les étapes suivantes:
 
     Introduction : Dans le premier paragraphe, présentation brève. Indiquer le {subject} et le {poste} pour lequel on postule ou le motif de la candidature.
@@ -23,8 +22,6 @@ async def generate_cover_letter(company_name: str, subject: str, nb_experience: 
 
     Formule de politesse : Utiliser une formule de politesse appropriée pour conclure la lettre, 
    
-
-    and Stop Stop Stop 
     """
     api_key = os.environ.get('OPENAI_API_KEY')  # Retrieve your API key from an environment variable
 
