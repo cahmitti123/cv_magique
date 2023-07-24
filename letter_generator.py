@@ -63,7 +63,7 @@ async def limitLetterGenerator(request: Request):
 
         # Check if the number of requests made exceeds the limit
         if requests_made >= 2:
-            raise HTTPException(status_code=429, detail="You have reached your today's quota. Please try again later.")
+            raise HTTPException(status_code=429, detail="Vous avez atteint le nombre maximal de requêtes pour aujourd'hui!")
 
         # Increment the number of requests made for the device today
         requests_per_device[device_id][today] = requests_made + 1
