@@ -23,7 +23,7 @@ from schemas import CreateCvRequest,CreatePublicCvRequest,UpdatePublicCvRequest,
 import json
 import uvicorn
 import random
-from models import Cv,User, Letter,PublicCv,PublicLetter
+from models import Cv,User, Letter,PublicCv,PublicLetter,DeletedcCv,DeletedLetter
 from fastapi.middleware.cors import CORSMiddleware
 from models import Base
 from starlette.config import Config
@@ -723,10 +723,44 @@ async def delete_cv(
         except NoCredentialsError:
             raise HTTPException(status_code=500, detail="Failed to connect to DigitalOcean Spaces")
     
+    
     # Delete the CV from the database
+    deleted_cv = DeletedcCv(
+        id=cv.id,
+        nom=cv.nom,
+        prenom=cv.prenom,
+        address=cv.address,
+        email=cv.email,
+        city=cv.city,
+        country=cv.country,
+        postalcode=cv.postalcode,
+        tele=cv.tele,
+        brief=cv.brief,
+        img_url="",
+        img_blob="",
+        style=cv.style,
+        color=cv.color,
+        description=cv.description,
+        experiences=cv.experiences,
+        education=cv.education,
+        languages=cv.languages,
+        skills=cv.skills,
+        loisirs=cv.loisirs,
+        is_experiences=cv.is_experiences,
+        is_education=cv.is_education,
+        is_languages=cv.is_languages,
+        is_skills=cv.is_skills,
+        is_loisirs=cv.is_loisirs,
+        is_active = cv.is_active,
+        text_size = cv.text_size,
+        right_cate = cv.right_cate,
+        left_cate = cv.left_cate,
+        user_id=user_id
+    )
+    session.add(deleted_cv)
     await session.delete(cv)
     await session.commit()
-
+    
     # Return a success message
     return {"message": "CV deleted successfully"}
 
@@ -1207,6 +1241,32 @@ async def delete_letter(
         raise HTTPException(status_code=403, detail="Unauthorized access")
 
     # Delete the letter from the database
+    del_letter = DeletedLetter(
+        id=letter.id,
+        a_prenom=letter.a_prenom,
+        a_nom=letter.a_nom,
+        a_email=letter.a_email,
+        a_ville=letter.a_ville,
+        a_adresse=letter.a_adresse,
+        a_Code_postal=letter.a_Code_postal,
+        a_tele=letter.a_tele,
+        b_prenom=letter.b_prenom,
+        b_nom=letter.b_nom,
+        b_entreprise=letter.b_entreprise,
+        b_ville=letter.b_ville,
+        b_adresse=letter.b_adresse,
+        b_Code_postal=letter.b_Code_postal,
+        objet=letter.objet,
+        date=letter.date,
+        lieu=letter.lieu,
+        style=letter.style,
+        color=letter.color,
+        lettre_de_motivation="",
+        signature=letter.signature,
+        is_active=letter.is_active,
+        user_id=user_id
+    )
+    session.add(del_letter)
     await session.delete(letter)
     await session.commit()
 

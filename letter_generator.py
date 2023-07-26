@@ -3,6 +3,8 @@ import asyncio
 import openai
 import os
 from datetime import datetime, timedelta
+import json
+from datetime import datetime
 
 async def generate_cover_letter(company_name: str, subject: str, nb_experience: int, activite: str, poste: str, skills: str):
     cover_letter_prompt = f"""
@@ -49,34 +51,53 @@ async def generate_cover_letter(company_name: str, subject: str, nb_experience: 
     return {"description": description}
 
 
-requests_per_device = {}
+
+
+
+REQUESTS_FILE_PATH = "requests_file.json"
+
+# Load the requests_per_device dictionary from the file, if it exists
+if os.path.exists(REQUESTS_FILE_PATH):
+    try:
+        with open(REQUESTS_FILE_PATH, "r") as file:
+            requests_per_device = json.load(file)
+    except json.JSONDecodeError:
+        # If the file is empty or contains invalid JSON data, initialize an empty dictionary
+        requests_per_device = {}
+else:
+    requests_per_device = {}
 
 
 async def limitLetterGenerator(request: Request):
-    # Get the current date
-    today = datetime.now().date().isoformat()
+    # Get the current date and month
+    today = datetime.now()
+    current_month = today.strftime("%Y-%m")
+   
     device_id = request.client.host
+    
     # Check if the device ID exists in the requests_per_device dictionary
     if device_id in requests_per_device:
-        # Get the requests made for the device today
-        requests_made = requests_per_device[device_id].get(today, 0)
+        # Get the requests made for the device this month
+        requests_made = requests_per_device[device_id].get(current_month, 0)
 
         # Check if the number of requests made exceeds the limit
-        if requests_made >= 2:
-            raise HTTPException(status_code=429, detail="Vous avez atteint le nombre maximal de requêtes pour aujourd'hui!")
+        if requests_made >= 20:
+            raise HTTPException(status_code=429, detail="Vous avez atteint le nombre maximal de requêtes pour ce mois!")
 
-        # Increment the number of requests made for the device today
-        requests_per_device[device_id][today] = requests_made + 1
+        # Increment the number of requests made for the device this month
+        requests_per_device[device_id][current_month] = requests_made + 1
     else:
-        # If it's a new device, initialize the requests_per_device entry
-        requests_per_device[device_id] = {today: 1}
+        # If it's a new device, initialize the requests_per_device entry for this month
+        requests_per_device[device_id] = {current_month: 1}
 
+    # Save the updated requests_per_device dictionary to the file
+    with open(REQUESTS_FILE_PATH, "w") as file:
+        json.dump(requests_per_device, file)
+    
     # Get the client's IP address
     client_ip = request.client.host
-
+    
     # Get the client's user agent (e.g., OS name)
     client_user_agent = request.headers.get("user-agent", "")
 
-    return {"msg":"Letter generated successfull","client_ip": client_ip, "device_id":device_id, "OS":client_user_agent}
-
-
+    return {"msg": "Letter generated successfully", "client_ip": client_ip, "device_id": device_id, "OS": client_user_agent}

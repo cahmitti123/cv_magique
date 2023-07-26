@@ -335,3 +335,63 @@ class UpdatePublicLetterRequest(BaseModel):
     lettre_de_motivation: str = None
     signature: str = None
     is_active:bool 
+
+
+class CreateDeletedCvRequest(BaseModel):
+    nom: Optional[str] 
+    prenom: Optional[str] 
+    address: Optional[str] 
+    email: Optional[str] 
+    city: Optional[str] 
+    country: Optional[str] 
+    postalcode: Optional[str] 
+    tele: Optional[str] 
+    brief: Optional[str] 
+    img_url: Optional[str] 
+    img_blob: Optional[str] 
+    style: Optional[str] 
+    color:Optional[str] 
+    description:Optional[str] 
+    experiences: Optional[str]                                              
+    education: Optional[str] 
+    languages: Optional[str] 
+    skills: Optional[str] 
+    loisirs: Optional[str] 
+    is_experiences : Optional[bool]
+    is_education : Optional[bool]
+    is_languages : Optional[bool]
+    is_skills : Optional[bool]
+    is_loisirs : Optional[bool]
+    is_active: Optional[bool]
+    text_size: Optional[float]
+    right_cate:Optional[str] 
+    left_cate:Optional[str] 
+    class Config:
+        orm_mode = True
+
+
+
+class CreateDeletedLetterRequest(BaseModel):
+    a_prenom: Optional[str] 
+    a_nom: Optional[str] 
+    a_email: Optional[str] 
+    a_ville: Optional[str] 
+    a_adresse: Optional[str] 
+    a_Code_postal: Optional[str] 
+    a_tele: Optional[str] 
+    b_prenom: Optional[str] 
+    b_nom: Optional[str] 
+    b_entreprise: Optional[str] 
+    b_ville: Optional[str] 
+    b_adresse: Optional[str] 
+    b_Code_postal: Optional[str] 
+    objet: Optional[str] 
+    date: Optional[str] 
+    lieu: Optional[str] 
+    style:Optional[str] 
+    color:Optional[str] 
+    lettre_de_motivation: Optional[str] 
+    signature: Optional[str] 
+    is_active: bool
+    class Config:
+        orm_mode = True
