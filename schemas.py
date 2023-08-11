@@ -156,6 +156,10 @@ class CreateLetterRequest(BaseModel):
     date: Optional[str] 
     lieu: Optional[str] 
     style:Optional[str] 
+    signature_alignement:Optional[str]
+    signature_couleur:Optional[str]
+    signature_taille:Optional[str]
+    signature_police:Optional[str]
     color:Optional[str] 
     lettre_de_motivation: Optional[str] 
     signature: Optional[str] 
@@ -181,6 +185,10 @@ class UpdateLetterRequest(BaseModel):
     date: str = None
     lieu: str = None
     style:str = None
+    signature_alignement:str = None
+    signature_couleur:str = None
+    signature_taille:str = None
+    signature_police:str = None
     color:str = None
     lettre_de_motivation: str = None
     signature: str = None
@@ -305,7 +313,11 @@ class CreatePublicLetterRequest(BaseModel):
     objet: Optional[str] 
     date: Optional[str] 
     lieu: Optional[str] 
-    style:Optional[str] 
+    style:Optional[str]
+    signature_alignement:Optional[str]
+    signature_couleur:Optional[str]
+    signature_taille:Optional[str]
+    signature_police:Optional[str]
     color:Optional[str] 
     lettre_de_motivation: Optional[str] 
     signature: Optional[str] 
@@ -331,6 +343,10 @@ class UpdatePublicLetterRequest(BaseModel):
     date: str = None
     lieu: str = None
     style:str = None
+    signature_alignement:str = None
+    signature_couleur:str = None
+    signature_taille:str = None
+    signature_police:str = None
     color:str = None
     lettre_de_motivation: str = None
     signature: str = None
@@ -388,10 +404,24 @@ class CreateDeletedLetterRequest(BaseModel):
     objet: Optional[str] 
     date: Optional[str] 
     lieu: Optional[str] 
-    style:Optional[str] 
+    style:Optional[str]
+    signature_alignement:Optional[str]
+    signature_couleur:Optional[str]
+    signature_taille:Optional[str]
+    signature_police:Optional[str]
     color:Optional[str] 
     lettre_de_motivation: Optional[str] 
     signature: Optional[str] 
     is_active: bool
     class Config:
         orm_mode = True
+
+
+
+
+
+
+
+
+
+
