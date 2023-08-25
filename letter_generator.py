@@ -21,8 +21,6 @@ async def generate_cover_letter(company_name: str, subject: str, nb_experience: 
 
     Dans le dernier paragraphe, exprimer de l'enthousiasme pour rejoindre l'entreprise {company_name} et réitérer l'intérêt pour le poste. 
     Mentionner que le candidat serait ravi de discuter plus en détail de sa candidature lors d'un entretien.
-
-    Formule de politesse : Utiliser une formule de politesse appropriée pour conclure la lettre, 
    
     """
     api_key = os.environ.get('OPENAI_API_KEY')  # Retrieve your API key from an environment variable
