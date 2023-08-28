@@ -1510,7 +1510,7 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
             request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'picture': user.avatar}
             # Generate the access token
             access_token = create_access_token(user.id)
-            return RedirectResponse(url=f'https://cvmagique.vercel.app/app?access_token={access_token}')
+            return RedirectResponse(url=f'https://cvmagique.vercel.app/login?access_token={access_token}')
 
         else:
             # User does not exist, create a new user and save their information
@@ -1522,7 +1522,7 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
 
             # Return token
             access_token = create_access_token(user.id)
-            return RedirectResponse(url=f'https://cvmagique.vercel.app/app?access_token={access_token}')
+            return RedirectResponse(url=f'https://cvmagique.vercel.app/login?access_token={access_token}')
 
            
             
