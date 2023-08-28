@@ -1631,7 +1631,7 @@ async def update_password(reset_token: str, new_password: str,session: AsyncSess
 
 # import user image
 @app.post("/me/profile/image")
-async def import_cv_image(
+async def import_user_image(
     image: UploadFile = File(...),
     session: AsyncSession = Depends(get_session),
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -1673,7 +1673,7 @@ async def import_cv_image(
 
 # delete user image
 @app.delete("/me/profile/image")
-async def delete_cv_image(
+async def delete_user_image(
     session: AsyncSession = Depends(get_session),
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
