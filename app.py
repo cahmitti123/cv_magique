@@ -40,7 +40,6 @@ from itsdangerous import URLSafeTimedSerializer
 from starlette.exceptions import HTTPException
 import smtplib
 from email.mime.text import MIMEText
-
 import os
 
 load_dotenv()
@@ -1628,7 +1627,87 @@ async def update_password(reset_token: str, new_password: str,session: AsyncSess
         raise HTTPException(status_code=400, detail="Invalid reset token")
 
 
+# user images :
 
+# import user image
+@app.post("/me/profile/image")
+async def import_cv_image(
+    image: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    # Save the uploaded image to DigitalOcean Spaces
+    image_path = f"cvmagic/{user_id}_{image.filename}"
+    try:
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=DIGITALOCEAN_SPACES_ENDPOINT_URL,
+            aws_access_key_id=DIGITALOCEAN_SPACES_ACCESS_KEY,
+            aws_secret_access_key=DIGITALOCEAN_SPACES_SECRET_KEY
+        )
+        s3.upload_fileobj(
+            image.file,
+            DIGITALOCEAN_SPACES_NAME,
+            image_path,
+            ExtraArgs={"ACL": "public-read"}
+        )
+    except NoCredentialsError:
+        raise HTTPException(status_code=500, detail="Failed to connect to DigitalOcean Spaces")
+
+    # Update the USER's image URL in the database
+    user = await session.execute(select(User).where(User.id == user_id))
+    user = user.scalar()
+    if not user:
+        raise HTTPException(status_code=404, detail="user not found")
+
+    user.avatar = f"{DIGITALOCEAN_SPACES_ENDPOINT_URL}/{DIGITALOCEAN_SPACES_NAME}/{image_path}"
+    await session.commit()
+    
+    return {"message":"image upload successfuuly","avatar_url":user.avatar}
+
+
+# delete user image
+@app.delete("/me/profile/image")
+async def delete_cv_image(
+    session: AsyncSession = Depends(get_session),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+     # Decode the access token
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+    # Retrieve the User from the database
+    user = await session.execute(select(User).where(User.id == user_id))
+    user = user.scalar()
+    if not user:
+        raise HTTPException(status_code=404, detail="user not found")
+
+    # Delete the User image from DigitalOcean Spaces
+    image_path = user.avatar.replace(f"{DIGITALOCEAN_SPACES_ENDPOINT_URL}/{DIGITALOCEAN_SPACES_NAME}/", "")
+    try:
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=DIGITALOCEAN_SPACES_ENDPOINT_URL,
+            aws_access_key_id=DIGITALOCEAN_SPACES_ACCESS_KEY,
+            aws_secret_access_key=DIGITALOCEAN_SPACES_SECRET_KEY
+        )
+        s3.delete_object(Bucket=DIGITALOCEAN_SPACES_NAME, Key=image_path)
+    except NoCredentialsError:
+        raise HTTPException(status_code=500, detail="Failed to connect to DigitalOcean Spaces")
+
+    # Clear the USER's image URL in the database
+    user.avatar = None
+    await session.commit()
+
+    # Return a success message
+    return {"message": "user image deleted successfully"}
+
+ 
 
 
 
