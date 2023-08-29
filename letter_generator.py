@@ -29,7 +29,7 @@ async def generate_cover_letter(company_name: str, subject: str, nb_experience: 
         return openai.Completion.create(
             engine="text-davinci-003",
             prompt=cover_letter_prompt,
-            max_tokens=500,  # Adjust the value as per your requirements
+            max_tokens=800,  # Adjust the value as per your requirements
             n=1,
             stop=None,
             temperature=0.7,
