@@ -1648,7 +1648,7 @@ async def import_user_image(
     user_id = payload["user_id"]
 
     # Save the uploaded image to DigitalOcean Spaces
-    image_path = f"cvmagic/{user_id}_{image.filename}"
+    image_path = f"cvmagic/{user_id}_{generate_random_id()}"
     try:
         s3 = boto3.client(
             "s3",
