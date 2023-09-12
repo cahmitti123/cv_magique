@@ -318,6 +318,7 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
             "is_active":cv.is_active,
             "text_size":cv.text_size,
             "category_size":cv.category_size,
+            "description_size":cv.description_size,
             "right_cate":cv.right_cate,
             "left_cate":cv.left_cate,
             "user_id": cv.user_id
@@ -648,6 +649,7 @@ async def duplicate_cv(cv_id: str, session: AsyncSession = Depends(get_session),
         is_active = cv.is_active,
         text_size = cv.text_size,
         category_size=cv.category_size,
+        description_size=cv.description_size,
         right_cate = cv.right_cate,
         left_cate = cv.left_cate,
         user_id=user_id
@@ -755,6 +757,7 @@ async def delete_cv(
         is_active = cv.is_active,
         text_size = cv.text_size,
         category_size=cv.category_size,
+        description_size=cv.description_size,
         right_cate = cv.right_cate,
         left_cate = cv.left_cate,
         user_id=user_id
@@ -835,6 +838,7 @@ async def get_cv(cv_id: str, session: AsyncSession = Depends(get_session)):
             "is_active":cv.is_active,
             "text_size":cv.text_size,
             "category_size":cv.category_size,
+            "description_size":cv.description_size,
             "right_cate":cv.right_cate,
             "left_cate":cv.left_cate,
         }
@@ -884,6 +888,7 @@ async def copy_cv(cv_id: str, session: AsyncSession = Depends(get_session), cred
         is_active = cv.is_active,
         text_size = cv.text_size,
         category_size=cv.category_size,
+        description_size=cv.description_size,
         right_cate = cv.right_cate,
         left_cate = cv.left_cate,
         user_id=user_id
@@ -1103,6 +1108,7 @@ async def get_all_cvs(
             "is_active":cv.is_active,
             "text_size":cv.text_size,
             "category_size":cv.category_size,
+            "description_size":cv.description_size,
             "right_cate":cv.right_cate,
             "left_cate":cv.left_cate,
             "user_id": cv.user_id
