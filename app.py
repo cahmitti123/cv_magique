@@ -321,7 +321,7 @@ async def get_current_user_cvs(session: AsyncSession = Depends(get_session), cre
             "description_size":cv.description_size,
             "right_cate":cv.right_cate,
             "permis" :cv.permis, 
-            "formatting" :cv.formatting, 
+            "formatting" :try_json_loads(cv.formatting), 
             "left_cate":cv.left_cate,
             "user_id": cv.user_id
         }
@@ -588,6 +588,7 @@ async def create_cv(cv: CreateCvRequest, session: AsyncSession = Depends(get_ses
     db_cv["languages"] = json.dumps(cv.languages) 
     db_cv["skills"] = json.dumps(cv.skills) 
     db_cv["loisirs"] = json.dumps(cv.loisirs) 
+    db_cv["formatting"] = json.dumps(cv.formatting) 
     db_cv["user_id"] = user_id
     cv = Cv(**db_cv)
     
@@ -790,6 +791,7 @@ async def create_cv(cv: CreatePublicCvRequest, session: AsyncSession = Depends(g
     db_cv["languages"] = json.dumps(cv.languages) 
     db_cv["skills"] = json.dumps(cv.skills) 
     db_cv["loisirs"] = json.dumps(cv.loisirs) 
+    db_cv["formatting"] = json.dumps(cv.formatting) 
     cv = PublicCv(**db_cv)
     
     # Save the new CV to the database
@@ -847,7 +849,7 @@ async def get_cv(cv_id: str, session: AsyncSession = Depends(get_session)):
             "description_size":cv.description_size,
             "right_cate":cv.right_cate,
             "permis" :cv.permis, 
-            "formatting" :cv.formatting, 
+            "formatting" :try_json_loads(cv.formatting), 
             "left_cate":cv.left_cate,
         }
     return {"cv": cv_info}
@@ -1121,7 +1123,7 @@ async def get_all_cvs(
             "description_size":cv.description_size,
             "right_cate":cv.right_cate,
             "permis" :cv.permis, 
-            "formatting" :cv.formatting, 
+            "formatting" :json.loads(cv.formatting), 
             "left_cate":cv.left_cate,
             "user_id": cv.user_id
         }
