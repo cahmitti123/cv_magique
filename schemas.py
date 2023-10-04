@@ -31,6 +31,9 @@ class CreateCvRequest(BaseModel):
     category_size: Optional[float]
     description_size:Optional[float]
     right_cate:Optional[str] 
+    right_cate:Optional[str] 
+    permis :Optional[str] 
+    formatting :Optional[str] 
     left_cate:Optional[str] 
     class Config:
         orm_mode = True
@@ -66,6 +69,8 @@ class CvResponse(BaseModel):
     category_size: float
     description_size:float
     right_cate: str
+    permis :str
+    formatting :str
     left_cate: str
     
     
@@ -100,6 +105,8 @@ class UpdateCvRequest(BaseModel):
     category_size: Optional[float]
     description_size:Optional[float]
     right_cate:Optional[str] 
+    permis :Optional[str] 
+    formatting :Optional[str] 
     left_cate:Optional[str] 
 
      
@@ -233,6 +240,8 @@ class CreatePublicCvRequest(BaseModel):
     category_size: Optional[float]
     description_size:Optional[float]
     right_cate:Optional[str] 
+    permis :Optional[str] 
+    formatting :Optional[str] 
     left_cate:Optional[str] 
     class Config:
         orm_mode = True
@@ -268,6 +277,8 @@ class CvPublicResponse(BaseModel):
     category_size: float
     description_size:float
     right_cate: str
+    permis :str
+    formatting :str
     left_cate: str
     
     
@@ -302,6 +313,8 @@ class UpdatePublicCvRequest(BaseModel):
     category_size: Optional[float]
     description_size:Optional[float]
     right_cate:Optional[str] 
+    permis :Optional[str] 
+    formatting :Optional[str] 
     left_cate:Optional[str] 
 
 
@@ -395,6 +408,8 @@ class CreateDeletedCvRequest(BaseModel):
     category_size: Optional[float]
     description_size:Optional[float]
     right_cate:Optional[str] 
+    permis :Optional[str] 
+    formatting :Optional[str] 
     left_cate:Optional[str] 
     class Config:
         orm_mode = True

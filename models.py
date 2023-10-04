@@ -38,6 +38,8 @@ class Cv(Base):
     category_size = Column(Float)
     description_size = Column(Float)
     right_cate = Column(String(256))
+    permis = Column(String(256))
+    formatting = Column(Text(600))
     left_cate = Column(String(256))
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
     user = relationship("User", back_populates="cvs")
@@ -74,6 +76,9 @@ class PublicCv(Base):
     category_size = Column(Float)
     description_size = Column(Float)
     right_cate = Column(String(256))
+    permis = Column(String(256))
+    formatting = Column(Text(600))
+    left_cate = Column(String(256))
     left_cate = Column(String(256))
     user_id = Column(Integer)
 
@@ -194,6 +199,9 @@ class DeletedcCv(Base):
     category_size = Column(Float)
     description_size = Column(Float)
     right_cate = Column(String(256))
+    permis = Column(String(256))
+    formatting = Column(Text(600))
+    left_cate = Column(String(256))
     left_cate = Column(String(256))
     user_id = Column(Integer)
 
