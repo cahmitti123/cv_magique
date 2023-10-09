@@ -17,20 +17,34 @@ async def generate_cover_letter(company_name: str, subject: str, nb_experience: 
     Je sollicite votre aide pour rédiger une lettre de motivation convaincante pour une demande d'emploi. Veuillez m'aider à créer une lettre de motivation personnalisée en tenant compte des détails suivants :
 
     Commencez la lettre par 'Cher Monsieur/Madame'.
+
     je veux que la lettre de motivation soit rédigée en trois paragraphes distincts.
-    Chaque paragraphe devrait mettre en évidence des aspects spécifiques de ma candidature, notamment mes compétences, mon expérience et mon enthousiasme pour le poste. Merci de bien vouloir structurer la lettre en conséquence pour assurer une présentation claire et concise de mes qualifications
-    
-    Nom de l'Entreprise : {company_name}
-    Sujet : {subject}
-    Nombre d'Années d'Expérience : {nb_experience}
-    Industrie/Activité : {activite}
-    Poste Souhaité : {poste}
-    Compétences et Qualités : {skills}
+    Chaque paragraphe devrait mettre en évidence des aspects spécifiques de ma candidature, notamment mes compétences,
+    mon expérience et mon enthousiasme pour le poste. Merci de bien vouloir structurer la lettre en conséquence pour assurer une présentation 
+    claire et concise de mes qualifications:
 
-    Je souhaite que la lettre de motivation mette en avant mon enthousiasme pour le poste, en mettant en avant mes compétences et mon expérience, en les alignant avec les valeurs et les besoins de l'entreprise. Merci de mettre en lumière mes réalisations et d'expliquer en quoi mon parcours fait de moi le candidat idéal pour ce poste.
+    premier paragraphe:
 
-    Je vous remercie de votre compréhension et de votre assistance dans ce processus.
+    Je vous écris pour exprimer mon vif intérêt à rejoindre {company_name} en tant que {poste}. 
+    Fort de {nb_experience} années d'expérience dans l'industrie {activite}, je suis convaincu que mes compétences et ma passion pour 
+    {subject} font de moi un candidat idéal pour ce poste. Mon parcours professionnel m'a permis de développer des compétences exceptionnelles 
+    en {skills}, que je suis enthousiaste à l'idée de mettre au service de votre entreprise.
+     
+    deuxième paragraphe:
+
+    Je suis particulièrement attiré par {company_name} en raison de son engagement envers {subject} et de sa réputation exceptionnelle dans l'industrie.
+    Au cours de mes années d'expérience, j'ai réussi à atteindre des résultats remarquables,
+    Mon approche proactive et ma capacité à résoudre les problèmes ont été des atouts majeurs dans mes rôles précédents, 
+    et je suis convaincu que ces compétences seront précieuses pour {company_name}.
+
+    troisième paragraphe:
     
+    Je suis convaincu que ma passion pour {subject} et mon engagement envers l'excellence, combinés à mon expérience professionnelle,
+    font de moi le candidat idéal pour ce poste chez {company_name}. J'espère avoir l'opportunité de discuter en détail de ma candidature
+    avec vous et d'expliquer en personne comment je peux contribuer de manière significative à votre entreprise. 
+    Je vous remercie de l'attention que vous porterez à ma demande et je me tiens à votre disposition pour toute information supplémentaire.
+    
+
     """
     api_key = os.environ.get(
         'OPENAI_API_KEY')  # Retrieve your API key from an environment variable
