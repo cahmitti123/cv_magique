@@ -13,11 +13,13 @@ async def generate_cover_letter(company_name: str, subject: str, nb_experience: 
     Sujet : Rédaction d'une Lettre de Motivation pour une Demande d'Emploi
 
     Instruction :
-
-    Commencez la lettre par 'Cher Monsieur/Madame'.
-
+    
     Je sollicite votre aide pour rédiger une lettre de motivation convaincante pour une demande d'emploi. Veuillez m'aider à créer une lettre de motivation personnalisée en tenant compte des détails suivants :
 
+    Commencez la lettre par 'Cher Monsieur/Madame'.
+    je veux que la lettre de motivation soit rédigée en trois paragraphes distincts.
+    Chaque paragraphe devrait mettre en évidence des aspects spécifiques de ma candidature, notamment mes compétences, mon expérience et mon enthousiasme pour le poste. Merci de bien vouloir structurer la lettre en conséquence pour assurer une présentation claire et concise de mes qualifications
+    
     Nom de l'Entreprise : {company_name}
     Sujet : {subject}
     Nombre d'Années d'Expérience : {nb_experience}
@@ -27,7 +29,8 @@ async def generate_cover_letter(company_name: str, subject: str, nb_experience: 
 
     Je souhaite que la lettre de motivation mette en avant mon enthousiasme pour le poste, en mettant en avant mes compétences et mon expérience, en les alignant avec les valeurs et les besoins de l'entreprise. Merci de mettre en lumière mes réalisations et d'expliquer en quoi mon parcours fait de moi le candidat idéal pour ce poste.
 
-    Je vous remercie de votre aide.
+    Je vous remercie de votre compréhension et de votre assistance dans ce processus.
+    
     """
     api_key = os.environ.get(
         'OPENAI_API_KEY')  # Retrieve your API key from an environment variable
