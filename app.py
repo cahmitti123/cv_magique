@@ -1548,7 +1548,7 @@ async def auth(request: Request, session: AsyncSession = Depends(get_session)):
 
             # Return token
             access_token = create_access_token(user.id)
-            return RedirectResponse(url=f'https://cvmagique.vercel.app/login?access_token={access_token}')
+            return RedirectResponse(url=f'http://localhost:3000/login?access_token={access_token}')
 
            
             
