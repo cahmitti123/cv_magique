@@ -1154,6 +1154,7 @@ async def create_letter(letter: CreateLetterRequest, session: AsyncSession = Dep
     db_letter = letter.dict(exclude_none=True)
     db_letter["id"] = letter_id
     db_letter["user_id"] = user_id
+    db_letter["formatting"] = json.dumps(letter.formatting) 
     letter = Letter(**db_letter)
     
     # Save the new letter to the database
@@ -1212,6 +1213,7 @@ async def duplicate_letter(letter_id: str, session: AsyncSession = Depends(get_s
         color=letter.color,
         lettre_de_motivation=letter.lettre_de_motivation,
         signature=letter.signature,
+        formatting=letter.formatting, 
         is_active=letter.is_active,
         user_id=user_id
     )
@@ -1296,6 +1298,7 @@ async def delete_letter(
         color=letter.color,
         lettre_de_motivation="",
         signature=letter.signature,
+        formatting = letter.formatting,
         is_active=letter.is_active,
         user_id=user_id
     )
@@ -1346,6 +1349,7 @@ async def get_current_user_letters(session: AsyncSession = Depends(get_session),
             "color":letter.color,
             "lettre_de_motivation": letter.lettre_de_motivation,
             "signature": letter.signature,
+            "formatting" :try_json_loads(letter.formatting),
             "is_active": letter.is_active,
             "user_id": letter.user_id
         }
@@ -1362,6 +1366,7 @@ async def create_public_letter(letter: CreatePublicLetterRequest, session: Async
     # Create a new Letter object from the request data
     db_letter = letter.dict(exclude_none=True)
     db_letter["id"] = letter_id
+    db_letter["formatting"] = json.dumps(letter.formatting) 
     letter = PublicLetter(**db_letter)
     
     # Save the new letter to the database
@@ -1413,6 +1418,7 @@ async def get_public_letter(letter_id: str, session: AsyncSession = Depends(get_
             "lettre_de_motivation": letter.lettre_de_motivation,
             "signature": letter.signature,
             "is_active": letter.is_active,
+            "formatting" : try_json_loads(letter.formatting),
             "user_id": letter.user_id
         }
     return {"letter": letter_info }
@@ -1476,6 +1482,7 @@ async def copy_letter(letter_id: str, session: AsyncSession = Depends(get_sessio
         color=letter.color,
         lettre_de_motivation=letter.lettre_de_motivation,
         signature=letter.signature,
+        formatting = json.dumps(letter.formatting),
         is_active=letter.is_active,
         user_id=user_id
     )

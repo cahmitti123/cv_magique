@@ -125,6 +125,7 @@ class Letter(Base):
     signature_police = Column(String(256)) 
     lettre_de_motivation= Column(Text(600))   
     signature= Column(String(256))
+    formatting = Column(Text(600))
     is_active= Column(Boolean, default=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
     user = relationship("User", back_populates="letters")
@@ -159,6 +160,7 @@ class PublicLetter(Base):
     lettre_de_motivation= Column(Text(600)) 
     lettre_de_motivation= Column(Text(600))   
     signature= Column(String(256))
+    formatting = Column(Text(600))
     is_active= Column(Boolean, default=True)
     user_id = Column(Integer)
   
@@ -234,5 +236,6 @@ class DeletedLetter(Base):
     lettre_de_motivation= Column(Text(600)) 
     lettre_de_motivation= Column(Text(600))   
     signature= Column(String(256))
+    formatting = Column(Text(600))
     is_active= Column(Boolean, default=True)
     user_id = Column(Integer)

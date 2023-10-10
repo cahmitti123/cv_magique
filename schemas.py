@@ -176,6 +176,7 @@ class CreateLetterRequest(BaseModel):
     color:Optional[str] 
     lettre_de_motivation: Optional[str] 
     signature: Optional[str] 
+    formatting :Optional[str] 
     is_active: bool
     class Config:
         orm_mode = True
@@ -205,6 +206,7 @@ class UpdateLetterRequest(BaseModel):
     color:str = None
     lettre_de_motivation: str = None
     signature: str = None
+    formatting :str = None
     is_active:bool
 
 
@@ -346,6 +348,7 @@ class CreatePublicLetterRequest(BaseModel):
     color:Optional[str] 
     lettre_de_motivation: Optional[str] 
     signature: Optional[str] 
+    formatting :Optional[str] 
     is_active: bool
     class Config:
         orm_mode = True
@@ -375,6 +378,7 @@ class UpdatePublicLetterRequest(BaseModel):
     color:str = None
     lettre_de_motivation: str = None
     signature: str = None
+    formatting :str = None
     is_active:bool 
 
 
@@ -441,6 +445,7 @@ class CreateDeletedLetterRequest(BaseModel):
     color:Optional[str] 
     lettre_de_motivation: Optional[str] 
     signature: Optional[str] 
+    formatting :Optional[str] 
     is_active: bool
     class Config:
         orm_mode = True
