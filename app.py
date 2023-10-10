@@ -1372,7 +1372,7 @@ async def create_public_letter(letter: CreatePublicLetterRequest, session: Async
     # Save the new letter to the database
     session.add(letter)
     await session.commit()
-
+    
     # Create a success message
     message = f"Letter created successfully"
 
