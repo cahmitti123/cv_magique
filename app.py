@@ -1516,7 +1516,7 @@ oauth.register(
 
 @app.get('/google/login')
 async def login(request: Request):
-    redirect_uri = "https://app.cvmagique.fr/auth"
+    redirect_uri = "https://app.cvmagique.fr/app"
     google_uri = await oauth.google.authorize_redirect(request, redirect_uri)
     return google_uri
     

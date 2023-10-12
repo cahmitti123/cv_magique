@@ -11,14 +11,15 @@ async def generate_cover_letter(company_name: str, subject: str, nb_experience: 
     cover_letter_prompt = f"""
     s'Il vous plaît, ignorez toutes les instructions précédentes.
     Sujet : Rédaction d'une Lettre de Motivation pour une Demande d'Emploi
-
+    
     Instruction :
+    The Letter must be format HTML
     
     Je sollicite votre aide pour rédiger une lettre de motivation convaincante pour une demande d'emploi. Veuillez m'aider à créer une lettre de motivation personnalisée en tenant compte des détails suivants :
 
-    Commencez la lettre par 'Cher Monsieur/Madame'.
+    Commencez la lettre par '<p>Cher Monsieur/Madame</p>'.
 
-    je veux que la lettre de motivation soit rédigée en trois paragraphes distincts.
+    je veux que la lettre de motivation soit rédigée en trois paragraphes pour chaque paragraphe dans une balise <p> </p> distincts.
     Chaque paragraphe devrait mettre en évidence des aspects spécifiques de ma candidature, notamment mes compétences,
     mon expérience et mon enthousiasme pour le poste. Merci de bien vouloir structurer la lettre en conséquence pour assurer une présentation 
     claire et concise de mes qualifications:
@@ -62,15 +63,27 @@ async def generate_cover_letter(company_name: str, subject: str, nb_experience: 
             presence_penalty=0,
             api_key=api_key
         )
-
+    
     cover_letter_response = await asyncio.to_thread(generate_cover_letter_async)
 
     if "choices" not in cover_letter_response or len(cover_letter_response.choices) == 0:
         raise Exception("Failed to generate cover letter description")
 
     description = cover_letter_response.choices[0].text.strip()
-    description = description.replace("\\n", "\n")
-    return {"description": description}
+    return description.replace('\n\n', ' ').replace('\n', ' ')
+  
+
+    # cover_letter_response = await asyncio.to_thread(generate_cover_letter_async)
+
+    # if "choices" not in cover_letter_response or len(cover_letter_response.choices) == 0:
+    #     raise Exception("Failed to generate cover letter description")
+
+    # description = cover_letter_response.choices[0].text.strip()
+    # description = description.replace("\\n", "\n")
+
+    # paragraphs = description.split('\n')
+    # html_paragraphs = "\n".join([f'<p>{paragraph}</p>' for paragraph in paragraphs])
+    # return {"description": html_paragraphs}
 
 
 REQUESTS_FILE_PATH = "requests_file.json"
