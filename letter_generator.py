@@ -70,7 +70,7 @@ async def generate_cover_letter(company_name: str, subject: str, nb_experience: 
         raise Exception("Failed to generate cover letter description")
 
     description = cover_letter_response.choices[0].text.strip()
-    return description.replace('\n\n', ' ').replace('\n', ' ')
+    return {"description": description.replace('\n\n', ' ').replace('\n', ' ')} 
   
 
     # cover_letter_response = await asyncio.to_thread(generate_cover_letter_async)
