@@ -41,10 +41,20 @@ from starlette.exceptions import HTTPException
 import smtplib
 from email.mime.text import MIMEText
 import os
+from httpx import AsyncClient  # Import the AsyncClient class from httpx for asynchronous requests
+
+
 
 load_dotenv()
 
 app = FastAPI()
+
+# Configure your Google OAuth2 client credentials
+GOOGLE_CLIENT_ID = "216217073911-3kond29dhr11hhqgv2mefgqatjc0oh0f.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET = "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"
+REDIRECT_URI = "https://oyster-app-7rf7n.ondigitalocean.app/login/callback"
+
+
 app.add_middleware(SessionMiddleware, secret_key="!secret")
 app.add_middleware(
     CORSMiddleware,
@@ -1514,53 +1524,143 @@ oauth.register(
 
 
 
-@app.get('/google/login')
-async def login(request: Request):
-    redirect_uri = "https://app.cvmagique.fr/app"
-    google_uri = await oauth.google.authorize_redirect(request, redirect_uri)
-    return google_uri
+# @app.get('/google/login')
+# async def login(request: Request):
+#     redirect_uri = "http:localhost:3000/app"
+#     google_uri = await oauth.google.authorize_redirect(request, redirect_uri)
+#     return google_uri
     
 
 
+@app.get("/google/login")
+async def login():
+    # Redirect users to the Google OAuth2 authorization URL
+    google_authorization_url = (
+        f"https://accounts.google.com/o/oauth2/auth"
+        f"?response_type=code&client_id={GOOGLE_CLIENT_ID}"
+        f"&redirect_uri={REDIRECT_URI}&scope=openid profile email"
+    )
+    return {"message": "Login via Google", "url": google_authorization_url}
 
-@app.get('/auth')
-async def auth(request: Request, session: AsyncSession = Depends(get_session)):
+@app.get("/login/callback")
+async def callback(
+    code: str = None,
+    state: str = None,
+    session: AsyncSession = Depends(get_session)
+):
     try:
-        token = await oauth.google.authorize_access_token(request)
-    except OAuthError as error:
-        return JSONResponse(content={'error': error.error})
-    
-    user_info = token.get('userinfo')
-    if user_info:
-        email = user_info.get('email')
-        # Check if the user already exists in the database
-        stmt = select(User).where(User.email == email)
-        result = await session.execute(stmt)
-        user = result.scalar()
+        if code is None:
+            raise HTTPException(status_code=400, detail="Authorization code missing")
 
-        if user:
-            # User already exists, log them in
-            request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'picture': user.avatar}
-            # Generate the access token
-            access_token = create_access_token(user.id)
-            return RedirectResponse(url=f'https://cvmagique.vercel.app/login?access_token={access_token}')
+        google_token_url = "https://accounts.google.com/o/oauth2/token"
+        client_id = GOOGLE_CLIENT_ID
+        client_secret = GOOGLE_CLIENT_SECRET
+        redirect_uri = REDIRECT_URI
 
+        token_data = {
+            "code": code,
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code",
+        }
+
+        async with AsyncClient() as client:
+            response = await client.post(google_token_url, data=token_data)
+
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail="Failed to obtain an access token")
+
+        token_response = response.json()
+
+        google_user_info_url = "https://www.googleapis.com/oauth2/v1/userinfo"
+        headers = {
+            "Authorization": f"Bearer {token_response['access_token']}"
+        }
+
+        async with AsyncClient() as client:
+            user_info_response = await client.get(google_user_info_url, headers=headers)
+
+        if user_info_response.status_code == 200:
+            user_info = user_info_response.json()
+            email = user_info.get('email')
+
+            stmt = select(User).where(User.email == email)
+            result = await session.execute(stmt)
+            user = result.scalar()
+            # return {'user': user}
+            if user:
+                # User already exists, log them in
+                user_data = {
+                    'id': user.id,
+                    'fullname': user.fullname,
+                    'email': user.email,
+                    'avatar': user.avatar
+                }
+                access_token = create_access_token(user.id)
+                return RedirectResponse(url=f'https://app.cvmagique.fr/login/callback?access_token={access_token}')
+                return {'message': 'User logged in', "access_token":access_token}
+            else:
+                # User does not exist, create a new user and save their information
+                user = User(fullname=user_info.get('name'), email=email, avatar=user_info.get('picture'))
+                session.add(user)
+                await session.commit()
+
+                user_data = {
+                    'id': user.id,
+                    'fullname': user.fullname,
+                    'email': user.email,
+                    'avatar': user.avatar
+                }
+                access_token = create_access_token(user.id)
+                return RedirectResponse(url=f'https://app.cvmagique.fr/login/callback?access_token={access_token}')
+                return {'message': 'New user created', "access_token":access_token}
         else:
-            # User does not exist, create a new user and save their information
-            user = User(fullname=user_info.get('name'), email=email, avatar=user_info.get('picture'))
-            session.add(user)
-            await session.commit()
-            
-            request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'avatar': user.avatar}
+            raise HTTPException(status_code=user_info_response.status_code, detail="Failed to fetch user info from Google")
+    except Exception as e:
+        # Log the error and return a more informative response
+        print(f"Error in /login/callback: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-            # Return token
-            access_token = create_access_token(user.id)
-            return RedirectResponse(url=f'https://app.cvmagique.fr/login?access_token={access_token}')
+
+# @app.get('/auth')
+# async def auth(request: Request, session: AsyncSession = Depends(get_session)):
+#     try:
+#         token = await oauth.google.authorize_access_token(request)
+#     except OAuthError as error:
+#         return JSONResponse(content={'error': error.error})
+    
+#     user_info = token.get('userinfo')
+#     if user_info:
+#         email = user_info.get('email')
+#         # Check if the user already exists in the database
+#         stmt = select(User).where(User.email == email)
+#         result = await session.execute(stmt)
+#         user = result.scalar()
+
+#         if user:
+#             # User already exists, log them in
+#             request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'picture': user.avatar}
+#             # Generate the access token
+#             access_token = create_access_token(user.id)
+#             return RedirectResponse(url=f'https://cvmagique.vercel.app/login?access_token={access_token}')
+
+#         else:
+#             # User does not exist, create a new user and save their information
+#             user = User(fullname=user_info.get('name'), email=email, avatar=user_info.get('picture'))
+#             session.add(user)
+#             await session.commit()
+            
+#             request.session['user'] = {'id': user.id, 'fullname': user.fullname, 'email': user.email, 'avatar': user.avatar}
+
+#             # Return token
+#             access_token = create_access_token(user.id)
+#             return RedirectResponse(url=f'https://app.cvmagique.fr/login?access_token={access_token}')
 
            
             
 
-    return JSONResponse(content={'message': 'User information not available'})
+#     return JSONResponse(content={'message': 'User information not available'})
 
     
 
