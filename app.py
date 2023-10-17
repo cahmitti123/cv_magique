@@ -49,10 +49,7 @@ load_dotenv()
 
 app = FastAPI()
 
-# Configure your Google OAuth2 client credentials
-GOOGLE_CLIENT_ID = "216217073911-3kond29dhr11hhqgv2mefgqatjc0oh0f.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET = "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"
-REDIRECT_URI = "https://oyster-app-7rf7n.ondigitalocean.app/login/callback"
+
 
 
 app.add_middleware(SessionMiddleware, secret_key="!secret")
@@ -68,6 +65,11 @@ limiter = FastAPILimiter()
 
 config = Config('.env')
 oauth = OAuth(config)
+
+# Configure your Google OAuth2 client credentials
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+REDIRECT_URI = os.environ.get('REDIRECT_URI')
 
 DB_HOST = os.environ.get('DB_HOST')
 DB_PORT = os.environ.get('DB_PORT')
@@ -1532,9 +1534,9 @@ oauth.register(
     
 
 
+# Redirect users to the Google OAuth2 authorization URL
 @app.get("/google/login")
 async def login():
-    # Redirect users to the Google OAuth2 authorization URL
     google_authorization_url = (
         f"https://accounts.google.com/o/oauth2/auth"
         f"?response_type=code&client_id={GOOGLE_CLIENT_ID}"
@@ -1599,7 +1601,6 @@ async def callback(
                 }
                 access_token = create_access_token(user.id)
                 return RedirectResponse(url=f'https://app.cvmagique.fr/login/callback?access_token={access_token}')
-                return {'message': 'User logged in', "access_token":access_token}
             else:
                 # User does not exist, create a new user and save their information
                 user = User(fullname=user_info.get('name'), email=email, avatar=user_info.get('picture'))
@@ -1614,11 +1615,9 @@ async def callback(
                 }
                 access_token = create_access_token(user.id)
                 return RedirectResponse(url=f'https://app.cvmagique.fr/login/callback?access_token={access_token}')
-                return {'message': 'New user created', "access_token":access_token}
         else:
             raise HTTPException(status_code=user_info_response.status_code, detail="Failed to fetch user info from Google")
     except Exception as e:
-        # Log the error and return a more informative response
         print(f"Error in /login/callback: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
